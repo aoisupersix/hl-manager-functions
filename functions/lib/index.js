@@ -1,14 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
-// Start writing Firebase Functions
-// https://firebase.google.com/docs/functions/typescript
-exports.helloWorld = functions.https.onRequest((request, response) => {
-    response.send("Hello from Firebase!");
+//statusが更新された際にlast_statusを更新
+exports.updateLastStatus = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
+    console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + change.before.val() + ",status(After):" + change.after.val());
+    return change.after.ref.parent.child('last_status').set(change.before.val());
 });
-exports.updateStatus = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
-    const status = change.before.val();
-    console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + status + ",status(After):" + change.after.val());
-    return change.after.ref.parent.child('last_status').set(status);
+//statusが更新された際にlast_update_dateを更新
+exports.updateLastUpdateDate = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
+    //更新時間
+    const timezoneoffset = -9; //UTC -> JST
+    const d = new Date(Date.now() - (timezoneoffset * 60 - new Date().getTimezoneOffset()) * 60000);
+    const update_date = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+    console.log("LastUpdateDate:" + update_date);
+    return change.after.ref.parent.child('last_update_date').set(update_date);
 });
 //# sourceMappingURL=index.js.map
