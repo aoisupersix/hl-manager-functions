@@ -6,28 +6,18 @@ const util = require("./util");
 admin.initializeApp(functions.config().firebase);
 const ref = admin.database().ref();
 /**
- * statusが更新された際にlast_statusを更新します。
+ * statusが更新された際にログと最終更新を更新します。
  */
-exports.updateLastStatus = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
+exports.updateStatusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + change.before.val() + ",status(After):" + change.after.val());
-    return change.after.ref.parent.child('last_status').set(change.before.val());
-});
-/**
- * statusが更新された際にlast_update_dateを更新します。
- */
-exports.updateLastUpdateDate = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
-    //更新時間
-    const update_date = util.getNowDateString();
-    return change.after.ref.parent.child('last_update_date').set(update_date);
-});
-/**
- * statusが更新された際にステータスログを追加します
- */
-exports.addUpdateLog = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     //更新時間
     const nowDate = util.getJstDate();
     const update_date = util.getDateString(nowDate);
     const update_day = util.getDayString(nowDate).replace(/\//g, "");
+    //最終更新
+    ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date);
+    ref.child(`/members/${context.params.memberId}/last_status`).set(change.before.val());
+    //ログ更新
     return ref.child(`/logs/${context.params.memberId}/${update_day}`).push({
         date: update_date,
         update_status: change.after.val()
