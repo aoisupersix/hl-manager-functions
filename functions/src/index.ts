@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as util from './util';
 
 admin.initializeApp(functions.config().firebase);
 
@@ -18,10 +19,7 @@ export const updateLastStatus = functions.database.ref('/members/{memberId}/stat
  */
 export const updateLastUpdateDate = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     //更新時間
-    const timezoneoffset = -9 //UTC -> JST
-    const d = new Date(Date.now() - (timezoneoffset * 60 - new Date().getTimezoneOffset()) * 60000);
-    const update_date = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
-    console.log("LastUpdateDate:" + update_date);
+    const update_date = util.getFormattedNowDate();
     return change.after.ref.parent.child('last_update_date').set(update_date);
 });
 
@@ -30,12 +28,8 @@ export const updateLastUpdateDate = functions.database.ref('/members/{memberId}/
  */
 export const addUpdateLog = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     //更新時間
-    const timezoneoffset = -9 //UTC -> JST
-    const d = new Date(Date.now() - (timezoneoffset * 60 - new Date().getTimezoneOffset()) * 60000);
-    const update_date = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
-    //const log = ref.child(`/members/${context.params.memberId}/logs`).push();
-    //log.child('date')
-    //console.log(log);
+    const update_date = util.getFormattedNowDate();
+
     return change.after.ref.parent.child('logs').push(
         {
             date: update_date,
