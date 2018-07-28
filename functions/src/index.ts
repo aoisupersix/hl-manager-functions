@@ -19,7 +19,7 @@ export const updateLastStatus = functions.database.ref('/members/{memberId}/stat
  */
 export const updateLastUpdateDate = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     //更新時間
-    const update_date = util.getFormattedNowDate();
+    const update_date = util.getNowDateString();
     return change.after.ref.parent.child('last_update_date').set(update_date);
 });
 
@@ -28,7 +28,7 @@ export const updateLastUpdateDate = functions.database.ref('/members/{memberId}/
  */
 export const addUpdateLog = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     //更新時間
-    const update_date = util.getFormattedNowDate();
+    const update_date = util.getNowDateString();
 
     return ref.child(`/logs/${context.params.memberId}`).push(
         {
