@@ -25,8 +25,10 @@ exports.updateLastUpdateDate = functions.database.ref('/members/{memberId}/statu
  */
 exports.addUpdateLog = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     //更新時間
-    const update_date = util.getNowDateString();
-    return ref.child(`/logs/${context.params.memberId}`).push({
+    const nowDate = util.getJstDate();
+    const update_date = util.getDateString(nowDate);
+    const update_day = util.getDayString(nowDate).replace(/\//g, "");
+    return ref.child(`/logs/${context.params.memberId}/${update_day}`).push({
         date: update_date,
         update_status: change.after.val()
     });
