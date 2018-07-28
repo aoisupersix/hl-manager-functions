@@ -30,7 +30,7 @@ export const addUpdateLog = functions.database.ref('/members/{memberId}/status')
     //更新時間
     const update_date = util.getFormattedNowDate();
 
-    return change.after.ref.parent.child('logs').push(
+    return ref.child(`/logs/${context.params.memberId}`).push(
         {
             date: update_date,
             update_status: change.after.val()
