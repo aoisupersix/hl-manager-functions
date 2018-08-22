@@ -29,10 +29,26 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
     // Exit if the keys don't match
     if (!secureCompare(key, functions.config().service_account.key)) {
         console.log('The key provided in the request does not match the key set in the environment. Check that', key, 'matches the cron.key attribute in `firebase env:get`');
-        res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
+        return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
             'cron.key environment variable.');
-        return;
     }
     console.log("AddNowStatusReferences");
+    //更新時間
+    const nowDate = util.getJstDate();
+    nowDate.setHours(0, 0, 0, 0);
+    const update_date = util.getDateString(nowDate);
+    const update_day = util.getDayString(nowDate).replace(/\//g, "");
+    ref.child("/members").once("value", (snap) => {
+        snap.forEach((member) => {
+            //ログ追加
+            ref.child(`/logs/${member.key}/${update_day}`).push({
+                date: update_date,
+                update_status: member.child('status').val()
+            });
+            return true;
+        });
+        return res.status(204);
+    });
+    return res.status(204);
 });
 //# sourceMappingURL=index.js.map
