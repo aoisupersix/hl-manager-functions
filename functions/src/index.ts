@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as secureCompare from 'secure-compare';
 import * as util from './util';
 
 admin.initializeApp(functions.config().firebase);
@@ -29,6 +30,17 @@ export const updateStatusReferences = functions.database.ref('/members/{memberId
     );
 });
 
-export const addNowStatusReferences = functions.pubsub.topic('addNowStatusReferences').onPublish((event) => {
+export const addNowStatusReferences = functions.https.onRequest((req, res) => {
+    const key = req.query.key;
+
+    // Exit if the keys don't match
+    if (!secureCompare(key, functions.config().service_account.key)) {
+      console.log('The key provided in the request does not match the key set in the environment. Check that', key,
+          'matches the cron.key attribute in `firebase env:get`');
+      res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
+          'cron.key environment variable.');
+      return;
+    }
+
     console.log("AddNowStatusReferences");
 });

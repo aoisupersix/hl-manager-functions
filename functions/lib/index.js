@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const secureCompare = require("secure-compare");
 const util = require("./util");
 admin.initializeApp(functions.config().firebase);
 const ref = admin.database().ref();
@@ -23,7 +24,15 @@ exports.updateStatusReferences = functions.database.ref('/members/{memberId}/sta
         update_status: change.after.val()
     });
 });
-exports.addNowStatusReferences = functions.pubsub.topic('addNowStatusReferences').onPublish((event) => {
+exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
+    const key = req.query.key;
+    // Exit if the keys don't match
+    if (!secureCompare(key, functions.config().service_account.key)) {
+        console.log('The key provided in the request does not match the key set in the environment. Check that', key, 'matches the cron.key attribute in `firebase env:get`');
+        res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
+            'cron.key environment variable.');
+        return;
+    }
     console.log("AddNowStatusReferences");
 });
 //# sourceMappingURL=index.js.map
