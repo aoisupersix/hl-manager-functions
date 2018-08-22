@@ -28,3 +28,7 @@ export const updateStatusReferences = functions.database.ref('/members/{memberId
         }
     );
 });
+
+export const addNowStatusReferences = functions.pubsub.topic('addNowStatusReferences').onPublish((event) => {
+    console.log("AddNowStatusReferences");
+});
