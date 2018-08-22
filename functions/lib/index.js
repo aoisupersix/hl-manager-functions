@@ -23,4 +23,7 @@ exports.updateStatusReferences = functions.database.ref('/members/{memberId}/sta
         update_status: change.after.val()
     });
 });
+exports.addNowStatusReferences = functions.pubsub.topic('addNowStatusReferences').onPublish((event) => {
+    console.log("AddNowStatusReferences");
+});
 //# sourceMappingURL=index.js.map
