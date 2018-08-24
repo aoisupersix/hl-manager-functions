@@ -51,7 +51,7 @@ export const addNowStatusReferences = functions.https.onRequest((req, res) => {
     const update_date = util.getDateString(nowDate);
     const update_day = util.getDayString(nowDate).replace(/\//g, "");
 
-    ref.child("/members").once("value", (snap) => {
+    ref.child("/members").orderByKey().once("value", (snap) => {
         snap.forEach((member) => {
             //ログ追加
             ref.child(`/logs/${member.key}/${update_day}`).push(
@@ -60,10 +60,9 @@ export const addNowStatusReferences = functions.https.onRequest((req, res) => {
                     update_status: member.child('status').val()
                 }
             );
-            return true;
+            return null;
         });
-        return res.status(204);
     });
 
-    return res.status(204);
+    return res.status(200).send("done.");
 });
