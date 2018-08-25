@@ -29,7 +29,7 @@ exports.statusReferences = functions.database.ref('/members/{memberId}/status').
  * CRON用
  * 全てのメンバーのログの初期データをデータベースに生成します。
  */
-exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
+exports.initDailyLog = functions.https.onRequest((req, res) => {
     //リクエストがPUTではない
     if (req.method !== 'PUT') {
         return res.status(405).send("This functions is only used to 'PUT' method.");
