@@ -4,6 +4,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const secureCompare = require("secure-compare");
 const util = require("./util");
+const dUtil = require("./dateUtil");
 admin.initializeApp(functions.config().firebase);
 const ref = admin.database().ref();
 /**
@@ -12,9 +13,9 @@ const ref = admin.database().ref();
 exports.updateStatusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + change.before.val() + ",status(After):" + change.after.val());
     //更新時間
-    const nowDate = util.getJstDate();
-    const update_date = util.getDateString(nowDate);
-    const update_day = util.getDayString(nowDate).replace(/\//g, "");
+    const nowDate = dUtil.getJstDate();
+    const update_date = dUtil.getDateString(nowDate);
+    const update_day = dUtil.getDayString(nowDate).replace(/\//g, "");
     //最終更新
     ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date);
     ref.child(`/members/${context.params.memberId}/last_status`).set(change.before.val());
@@ -29,6 +30,9 @@ exports.updateStatusReferences = functions.database.ref('/members/{memberId}/sta
  * 全てのメンバーのログの初期データをデータベースに生成します。
  */
 exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
+    if (util.ContainsUndefined(req.query.key)) {
+        return res.status(403).send("Invalid query parameters.");
+    }
     const key = req.query.key;
     // Exit if the keys don't match
     if (!secureCompare(key, functions.config().service_account.key)) {
@@ -37,10 +41,10 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
             'cron.key environment variable.');
     }
     //更新時間
-    const nowDate = util.getJstDate();
+    const nowDate = dUtil.getJstDate();
     nowDate.setHours(0, 0, 0, 0);
-    const update_date = util.getDateString(nowDate);
-    const update_day = util.getDayString(nowDate).replace(/\//g, "");
+    const update_date = dUtil.getDateString(nowDate);
+    const update_day = dUtil.getDayString(nowDate).replace(/\//g, "");
     ref.child("/members").orderByKey().once("value", (snap) => {
         snap.forEach((member) => {
             //ログ追加
@@ -54,7 +58,13 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
     return res.status(200).send("done.");
 });
 exports.holdTime = functions.https.onRequest((req, res) => {
+    if (util.ContainsUndefined(req.query.key, req.query.memId, req.query.startDate, req.query.endDate)) {
+        return res.status(403).send("Invalid query parameters.");
+    }
     const key = req.query.key;
+    const memId = req.query.memberId;
+    const startDate = new Date(req.query.startDate);
+    const endDate = new Date(req.query.endDate);
     // Exit if the keys don't match
     // if (!secureCompare(key, functions.config().service_account.key)) {
     //     console.log('The key provided in the request does not match the key set in the environment. Check that', key,
@@ -62,7 +72,27 @@ exports.holdTime = functions.https.onRequest((req, res) => {
     //     return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
     //         'cron.key environment variable.');
     // }
-    const startDate = new Date(req.query.startDate);
-    return res.status(200).send(startDate.toString());
+    //dateのHour以下は必ず0で初期化する
+    startDate.setHours(0);
+    startDate.setMinutes(0);
+    startDate.setSeconds(0);
+    startDate.setMilliseconds(0);
+    endDate.setHours(0);
+    endDate.setMinutes(0);
+    endDate.setSeconds(0);
+    endDate.setMilliseconds(0);
+    // ref.child("/members").orderByKey().once("value", (snap) => {
+    //     snap.forEach((member) => {
+    //         //ログ追加
+    //         ref.child(`/logs/${member.key}/${update_day}`).push(
+    //             {
+    //                 date: update_date,
+    //                 update_status: member.child('status').val()
+    //             }
+    //         );
+    //         return null;
+    //     });
+    // });
+    return res.status(200).send("startDate == endDate : " + (startDate.getTime() === endDate.getTime()));
 });
 //# sourceMappingURL=index.js.map
