@@ -53,4 +53,16 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
     });
     return res.status(200).send("done.");
 });
+exports.holdTime = functions.https.onRequest((req, res) => {
+    const key = req.query.key;
+    // Exit if the keys don't match
+    // if (!secureCompare(key, functions.config().service_account.key)) {
+    //     console.log('The key provided in the request does not match the key set in the environment. Check that', key,
+    //         'matches the cron.key attribute in `firebase env:get`');
+    //     return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
+    //         'cron.key environment variable.');
+    // }
+    const startDate = new Date(req.query.startDate);
+    return res.status(200).send(startDate.toString());
+});
 //# sourceMappingURL=index.js.map
