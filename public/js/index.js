@@ -3,8 +3,14 @@
  */
 var statusSnap;
 
+/**
+ * 在室率ゲージ
+ */
+var weeklyGauge;
+
 $(function(){
   initDb();
+  initWeeklyGauge();
 })
 
 /**
@@ -29,7 +35,6 @@ function initDb() {
 
 /**
  * 初期化処理を行います。
- * AndroidApp側から呼び出される関数です。
  * @param {DataSnapShot} rootSnap DBのルート
  */
 function init(rootSnap) {
@@ -50,8 +55,8 @@ function init(rootSnap) {
       members[i]["last_update_date"]
     );
   }
-  //initStatusDetailButton(status);
 }
+
 /**
  * メンバー情報の更新を行います。
  * AndroidApp側から呼び出される関数です。
@@ -118,4 +123,29 @@ function addMemberRow(id, name, statusText, color, lastUpdateDate){
     .append($('<td class="status"></td>').text(statusText))
     .append($('<td class="lastUpdateDate"></td>').text(lastUpdateDate))
   );
+}
+
+/**
+ * 今週の在室率ゲージの初期化を行います。
+ */
+function initWeeklyGauge() {
+  var gaugeConf = liquidFillGaugeDefaultSettings();
+  gaugeConf.circleColor = "#D4AB6A";
+  gaugeConf.textColor = "#553300";
+  gaugeConf.waveTextColor = "#805615";
+  gaugeConf.waveColor = "#AA7D39";
+  gaugeConf.circleThickness = 0.1;
+  gaugeConf.circleFillGap = 0.2;
+  gaugeConf.textVertPosition = 0.8;
+  gaugeConf.waveAnimateTime = 2000;
+  gaugeConf.waveHeight = 0.3;
+  gaugeConf.waveCount = 1;
+  weeklyGauge = loadLiquidFillGauge("weeklyGauge", 60.1, gaugeConf);
+}
+
+/**
+ * 今週の在室率ゲージの更新を行います。
+ */
+function updateWeeklyGauge(memberId) {
+  //TODO
 }
