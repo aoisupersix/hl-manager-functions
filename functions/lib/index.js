@@ -58,20 +58,20 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
     return res.status(200).send("done.");
 });
 exports.holdTime = functions.https.onRequest((req, res) => {
-    if (util.ContainsUndefined(req.query.key, req.query.memberId, req.query.startDate, req.query.endDate)) {
+    if (util.ContainsUndefined(req.query.key, req.query.memberId, req.query.stateId, req.query.startDate, req.query.endDate)) {
         return res.status(403).send("Invalid query parameters.");
     }
     const key = req.query.key;
-    const memId = req.query.memberId;
+    const memId = +req.query.memberId;
+    const stateId = +req.query.stateId;
     const startDate = new Date(req.query.startDate);
     const endDate = new Date(req.query.endDate);
-    // Exit if the keys don't match
-    // if (!secureCompare(key, functions.config().service_account.key)) {
-    //     console.log('The key provided in the request does not match the key set in the environment. Check that', key,
-    //         'matches the cron.key attribute in `firebase env:get`');
-    //     return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
-    //         'cron.key environment variable.');
-    // }
+    //Exit if the keys don't match
+    if (!secureCompare(key, functions.config().service_account.key)) {
+        console.log('The key provided in the request does not match the key set in the environment. Check that', key, 'matches the cron.key attribute in `firebase env:get`');
+        return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
+            'cron.key environment variable.');
+    }
     //dateのHour以下は必ず0で初期化する
     startDate.setHours(0);
     startDate.setMinutes(0);
@@ -81,12 +81,38 @@ exports.holdTime = functions.https.onRequest((req, res) => {
     endDate.setMinutes(0);
     endDate.setSeconds(0);
     endDate.setMilliseconds(0);
-    return ref.child(`/logs/${memId}/`).orderByKey().once("value", (snap) => {
+    return ref.child(`/logs/${memId}/`).orderByKey().once("value")
+        .then((snap) => {
+        let holdMinute = 0;
         for (const date = startDate; date.getTime() <= endDate.getTime(); date.setDate(date.getDate() + 1)) {
             const log_key = dUtil.getLogsKeyString(date);
-            console.log("dLoop:" + log_key);
+            console.log("================" + log_key + "===============");
+            if (snap.hasChild(log_key)) {
+                //ステータス時間の計測
+                let nowDate = date;
+                let nowState = -1;
+                snap.child(log_key).forEach((logSnap) => {
+                    const d = new Date(logSnap.child('date').val());
+                    const val = logSnap.child('update_status').val();
+                    console.log(`log_key Loop(log_key:${log_key},nowDate:${dUtil.getDateString(nowDate)},nowState:${nowState},holdMinute:${holdMinute} => d:${dUtil.getDateString(d)},val:${val})`);
+                    if (val !== nowState && nowState === stateId) {
+                        //ステータス時間追加
+                        console.log(`addHoldMinute Before: ${dUtil.getDateString(nowDate)}, After: ${dUtil.getDateString(d)}, Sub:${Math.floor((d.getTime() - nowDate.getTime()) / (1000 * 60))}`);
+                        holdMinute += Math.floor((d.getTime() - nowDate.getTime()) / (1000 * 60));
+                    }
+                    nowDate = d;
+                    nowState = val;
+                    return false;
+                });
+                if (nowState === stateId) {
+                    //ステータス時間追加
+                    const ed = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+                    console.log(`addHoldMinute Before: ${dUtil.getDateString(nowDate)}, After: ${dUtil.getDateString(ed)}, Sub:${Math.floor((ed.getTime() - nowDate.getTime()) / (1000 * 60))}`);
+                    holdMinute += Math.floor((ed.getTime() - nowDate.getTime()) / (1000 * 60));
+                }
+            }
         }
-        return res.status(200).send("done.");
+        return res.status(200).send(holdMinute.toString());
     }).catch((reason) => {
         return res.status(406).send(reason.toString());
     });
