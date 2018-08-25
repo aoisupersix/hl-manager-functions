@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const secureCompare = require("secure-compare");
-const util = require("./util");
-const dUtil = require("./dateUtil");
+const util = require("./utils/util");
+const dUtil = require("./utils/dateUtil");
 admin.initializeApp(functions.config().firebase);
 const ref = admin.database().ref();
 /**

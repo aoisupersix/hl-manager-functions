@@ -1,8 +1,8 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as secureCompare from 'secure-compare';
-import * as util from './util';
-import * as dUtil from './dateUtil';
+import * as util from './utils/util';
+import * as dUtil from './utils/dateUtil';
 import { request } from 'http';
 
 admin.initializeApp(functions.config().firebase);
@@ -10,6 +10,7 @@ admin.initializeApp(functions.config().firebase);
 const ref = admin.database().ref();
 
 /**
+ * DBトリガー
  * statusが更新された際にログと最終更新を更新します。
  */
 export const statusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
@@ -33,8 +34,12 @@ export const statusReferences = functions.database.ref('/members/{memberId}/stat
 });
 
 /**
- * CRON用
- * 全てのメンバーのログの初期データをデータベースに生成します。
+ * ※CRON用（通常は呼ばないこと）
+ * 0:00に全てのメンバーのログの初期データをデータベースに生成します。
+ * Method: PUT
+ * Query {
+ *   key : 認証用キー
+ * }
  */
 export const initDailyLog = functions.https.onRequest((req, res) => {
     //リクエストがPUTではない
@@ -79,8 +84,17 @@ export const initDailyLog = functions.https.onRequest((req, res) => {
 
 /**
  * パラメータに与えられたデータの期間内にステータスが保持された時間を分単位で取得します。
+ * Method: All
+ * Query: {
+ *   key : 認証用キー
+ *   memberId : 取得対象のメンバーID
+ *   stateId : 取得対象のステータスID
+ *   startDate : 取得開始期間
+ *   endDate : 取得終了時間
+ * }
  */
 export const holdTime = functions.https.onRequest((req, res) => {
+    //パラメータ不足
     if(util.ContainsUndefined(req.query.key, req.query.memberId, req.query.stateId, req.query.startDate, req.query.endDate)) {
         return res.status(403).send("Invalid query parameters.");
     }
