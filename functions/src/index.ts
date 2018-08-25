@@ -86,7 +86,6 @@ export const initDailyLog = functions.https.onRequest((req, res) => {
  * パラメータに与えられたデータの期間内にステータスが保持された時間を分単位で取得します。
  * Method: All
  * Query: {
- *   key : 認証用キー
  *   memberId : 取得対象のメンバーID
  *   stateId : 取得対象のステータスID
  *   startDate : 取得開始期間
@@ -95,22 +94,13 @@ export const initDailyLog = functions.https.onRequest((req, res) => {
  */
 export const holdTime = functions.https.onRequest((req, res) => {
     //パラメータ不足
-    if(util.ContainsUndefined(req.query.key, req.query.memberId, req.query.stateId, req.query.startDate, req.query.endDate)) {
+    if(util.ContainsUndefined(req.query.memberId, req.query.stateId, req.query.startDate, req.query.endDate)) {
         return res.status(403).send("Invalid query parameters.");
     }
-    const key = req.query.key;
     const memId: number = +req.query.memberId;
     const stateId: number = +req.query.stateId;
     const startDate = new Date(req.query.startDate);
     const endDate = new Date(req.query.endDate);
-
-    //Exit if the keys don't match
-    if (!secureCompare(key, functions.config().service_account.key)) {
-        console.log('The key provided in the request does not match the key set in the environment. Check that', key,
-            'matches the cron.key attribute in `firebase env:get`');
-        return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
-            'cron.key environment variable.');
-    }
 
     //dateのHour以下は必ず0で初期化する
     startDate.setHours(0);
