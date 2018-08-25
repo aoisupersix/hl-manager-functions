@@ -8,10 +8,18 @@ var statusSnap;
  */
 var weeklyGauge;
 
-$(function(){
+$(function () {
+
+  /**
+   * モーダルクローズイベント
+   */
+  $('#statusDetailModal').on('hidden.bs.modal', function (e) {
+    weeklyGauge.update(0); //ゲージを0にする
+  });
+
+
   initDb();
   initWeeklyGauge();
-  updateWeeklyGauge(0);
 })
 
 /**
@@ -92,6 +100,7 @@ function updateMemberStatus(memberId, memberSnap) {
  */
 function showStatusDetail(obj) {
   console.log(obj);
+  updateWeeklyGauge($(obj).attr('data-id'));
   $('#statusDetail-Name').text($(obj).attr('data-name'));
   $('#statusDetail-Status').text($(obj).attr('data-statusText'));
   $('#statusDetailModal').attr('data-id', $(obj).attr('data-id'));
@@ -149,18 +158,22 @@ function initWeeklyGauge() {
  */
 function updateWeeklyGauge(memberId) {
   var endDate = new Date();
-  var startDate = endDate;
+  var startDate = new Date();
   startDate.setDate(endDate.getDate() - 7); //一週間前
+  var edStr = endDate.getFullYear() + "/" + (endDate.getMonth() + 1) + "/" + endDate.getDate();
+  var stStr = startDate.getFullYear() + "/" + (startDate.getMonth() + 1) + "/" + startDate.getDate();
+  console.log("HoldTime: https://hlmanager-32609.firebaseapp.com/holdTime?memberId=" + memberId + "&stateId=2&startDate=" + stStr + "&endDate=" + edStr);
   $.get({
     url : "https://hlmanager-32609.firebaseapp.com/holdTime",
     data : {
       memberId: memberId,
       stateId: 2,
-      startDate: startDate.getFullYear() + "/" + (startDate.getMonth() + 1) + "/" + startDate.getDay(),
-      endDate: endDate.getFullYear() + "/" + (endDate.getMonth() + 1) + "/" + endDate.getDay(),
+      startDate: stStr,
+      endDate: edStr,
     },
     success : function(data) {
-      console.log(data);
+      var percent = (data / (7 * 24 * 60) * 100);
+      weeklyGauge.update(percent.toFixed(1));
     }
   });
 }
