@@ -58,3 +58,11 @@ export function getNowDateString() {
 export function getDateString(date: Date) {
     return `${format4Digit(date.getFullYear())}/${format2Digit(date.getMonth() + 1)}/${format2Digit(date.getDate())} ${format2Digit(date.getHours())}:${format2Digit(date.getMinutes())}:${format2Digit(date.getSeconds())}`;
 }
+
+/**
+ * 引数に与えられたDateからlogのKey名(YearMonthDate)を取得して返します。
+ * @param date Date
+ */
+export function getLogsKeyString(date: Date): string {
+    return `${format4Digit(date.getFullYear())}${format2Digit(date.getMonth() + 1)}${format2Digit(date.getDate())}`
+}

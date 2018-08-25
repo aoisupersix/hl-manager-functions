@@ -58,7 +58,7 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
     return res.status(200).send("done.");
 });
 exports.holdTime = functions.https.onRequest((req, res) => {
-    if (util.ContainsUndefined(req.query.key, req.query.memId, req.query.startDate, req.query.endDate)) {
+    if (util.ContainsUndefined(req.query.key, req.query.memberId, req.query.startDate, req.query.endDate)) {
         return res.status(403).send("Invalid query parameters.");
     }
     const key = req.query.key;
@@ -81,18 +81,14 @@ exports.holdTime = functions.https.onRequest((req, res) => {
     endDate.setMinutes(0);
     endDate.setSeconds(0);
     endDate.setMilliseconds(0);
-    // ref.child("/members").orderByKey().once("value", (snap) => {
-    //     snap.forEach((member) => {
-    //         //ログ追加
-    //         ref.child(`/logs/${member.key}/${update_day}`).push(
-    //             {
-    //                 date: update_date,
-    //                 update_status: member.child('status').val()
-    //             }
-    //         );
-    //         return null;
-    //     });
-    // });
-    return res.status(200).send("startDate == endDate : " + (startDate.getTime() === endDate.getTime()));
+    return ref.child(`/logs/${memId}/`).orderByKey().once("value", (snap) => {
+        for (const date = startDate; date.getTime() <= endDate.getTime(); date.setDate(date.getDate() + 1)) {
+            const log_key = dUtil.getLogsKeyString(date);
+            console.log("dLoop:" + log_key);
+        }
+        return res.status(200).send("done.");
+    }).catch((reason) => {
+        return res.status(406).send(reason.toString());
+    });
 });
 //# sourceMappingURL=index.js.map

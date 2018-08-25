@@ -60,4 +60,12 @@ function getDateString(date) {
     return `${format4Digit(date.getFullYear())}/${format2Digit(date.getMonth() + 1)}/${format2Digit(date.getDate())} ${format2Digit(date.getHours())}:${format2Digit(date.getMinutes())}:${format2Digit(date.getSeconds())}`;
 }
 exports.getDateString = getDateString;
+/**
+ * 引数に与えられたDateからlogのKey名(YearMonthDate)を取得して返します。
+ * @param date Date
+ */
+function getLogsKeyString(date) {
+    return `${format4Digit(date.getFullYear())}${format2Digit(date.getMonth() + 1)}${format2Digit(date.getDate())}`;
+}
+exports.getLogsKeyString = getLogsKeyString;
 //# sourceMappingURL=dateUtil.js.map
