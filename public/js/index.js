@@ -1,5 +1,5 @@
 /**
- * ステータス情報のJSON
+ * ステータス情報のDBスナップショット
  */
 var statusSnap;
 
@@ -147,5 +147,14 @@ function initWeeklyGauge() {
  * 今週の在室率ゲージの更新を行います。
  */
 function updateWeeklyGauge(memberId) {
-  //TODO
+  var endDate = new Date();
+  var startDate = endDate;
+  startDate.setDate(endDate.getDate() - 7); //一週間前
+  var holdTime = firebase.functions().httpsCollable('holdTime');
+  holdTime({
+    memberId: memberId,
+    stateId: 2,
+    startDate: startDate.getFullYear() + "/" + (startDate.getMonth() + 1) + "/" + startDate.getDay(),
+    endDate: endDate.getFullYear() + "/" + (endDate.getMonth() + 1) + "/" + endDate.getDay(),
+  });
 }
