@@ -3,7 +3,6 @@ import * as admin from 'firebase-admin';
 import * as secureCompare from 'secure-compare';
 import * as util from './utils/util';
 import * as dUtil from './utils/dateUtil';
-import { request } from 'http';
 
 admin.initializeApp(functions.config().firebase);
 

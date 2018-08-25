@@ -11,6 +11,7 @@ var weeklyGauge;
 $(function(){
   initDb();
   initWeeklyGauge();
+  updateWeeklyGauge(0);
 })
 
 /**
@@ -150,11 +151,16 @@ function updateWeeklyGauge(memberId) {
   var endDate = new Date();
   var startDate = endDate;
   startDate.setDate(endDate.getDate() - 7); //一週間前
-  var holdTime = firebase.functions().httpsCollable('holdTime');
-  holdTime({
-    memberId: memberId,
-    stateId: 2,
-    startDate: startDate.getFullYear() + "/" + (startDate.getMonth() + 1) + "/" + startDate.getDay(),
-    endDate: endDate.getFullYear() + "/" + (endDate.getMonth() + 1) + "/" + endDate.getDay(),
+  $.get({
+    url : "https://hlmanager-32609.firebaseapp.com/holdTime",
+    data : {
+      memberId: memberId,
+      stateId: 2,
+      startDate: startDate.getFullYear() + "/" + (startDate.getMonth() + 1) + "/" + startDate.getDay(),
+      endDate: endDate.getFullYear() + "/" + (endDate.getMonth() + 1) + "/" + endDate.getDay(),
+    },
+    success : function(data) {
+      console.log(data);
+    }
   });
 }

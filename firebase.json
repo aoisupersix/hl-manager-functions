@@ -10,7 +10,8 @@
     "public": "public",
     "rewrites": [
       {
-        "source": "/**", "function": "nodeinfo"
+        "source": "/holdTime",
+        "function": "holdTime"
       }
     ],
     "ignore": [
