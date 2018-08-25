@@ -1,9 +1,9 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as secureCompare from 'secure-compare';
-
 import * as util from './util';
 import * as dUtil from './dateUtil';
+import { request } from 'http';
 
 admin.initializeApp(functions.config().firebase);
 
@@ -12,7 +12,7 @@ const ref = admin.database().ref();
 /**
  * statusが更新された際にログと最終更新を更新します。
  */
-export const updateStatusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
+export const statusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + change.before.val() + ",status(After):" + change.after.val());
     //更新時間
     const nowDate = dUtil.getJstDate();
@@ -37,12 +37,17 @@ export const updateStatusReferences = functions.database.ref('/members/{memberId
  * 全てのメンバーのログの初期データをデータベースに生成します。
  */
 export const addNowStatusReferences = functions.https.onRequest((req, res) => {
+    //リクエストがPUTではない
+    if(req.method !== 'PUT') {
+        return res.status(405).send("This functions is only used to 'PUT' method.");
+    }
+    //パラメータ不足
     if(util.ContainsUndefined(req.query.key)) {
-        return res.status(403).send("Invalid query parameters.");
+        return res.status(400).send("Invalid query parameters.");
     }
     const key = req.query.key;
 
-    // Exit if the keys don't match
+    //キーが異なる
     if (!secureCompare(key, functions.config().service_account.key)) {
         console.log('The key provided in the request does not match the key set in the environment. Check that', key,
             'matches the cron.key attribute in `firebase env:get`');

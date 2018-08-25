@@ -10,7 +10,7 @@ const ref = admin.database().ref();
 /**
  * statusが更新された際にログと最終更新を更新します。
  */
-exports.updateStatusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
+exports.statusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + change.before.val() + ",status(After):" + change.after.val());
     //更新時間
     const nowDate = dUtil.getJstDate();
@@ -30,11 +30,16 @@ exports.updateStatusReferences = functions.database.ref('/members/{memberId}/sta
  * 全てのメンバーのログの初期データをデータベースに生成します。
  */
 exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
+    //リクエストがPUTではない
+    if (req.method !== 'PUT') {
+        return res.status(405).send("This functions is only used to 'PUT' method.");
+    }
+    //パラメータ不足
     if (util.ContainsUndefined(req.query.key)) {
-        return res.status(403).send("Invalid query parameters.");
+        return res.status(400).send("Invalid query parameters.");
     }
     const key = req.query.key;
-    // Exit if the keys don't match
+    //キーが異なる
     if (!secureCompare(key, functions.config().service_account.key)) {
         console.log('The key provided in the request does not match the key set in the environment. Check that', key, 'matches the cron.key attribute in `firebase env:get`');
         return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
@@ -57,6 +62,9 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
     });
     return res.status(200).send("done.");
 });
+/**
+ * パラメータに与えられたデータの期間内にステータスが保持された時間を分単位で取得します。
+ */
 exports.holdTime = functions.https.onRequest((req, res) => {
     if (util.ContainsUndefined(req.query.key, req.query.memberId, req.query.stateId, req.query.startDate, req.query.endDate)) {
         return res.status(403).send("Invalid query parameters.");
