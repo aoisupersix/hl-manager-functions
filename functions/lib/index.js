@@ -44,7 +44,6 @@ exports.addNowStatusReferences = functions.https.onRequest((req, res) => {
     ref.child("/members").orderByKey().once("value", (snap) => {
         snap.forEach((member) => {
             //ログ追加
-            console.log(member.val());
             ref.child(`/logs/${member.key}/${update_day}`).push({
                 date: update_date,
                 update_status: member.child('status').val()
