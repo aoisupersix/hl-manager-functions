@@ -360,7 +360,6 @@
         if (showTimeAxis) { appendTimeAxis(g, xAxis, timeAxisYPosition); }
         if (timeAxisTick) { appendTimeAxisTick(g, xAxis, maxStack); }
   
-        console.log("width:" + width + ",gParentSize.width:" + gParentSize.width);
         if (width > gParentSize.width) {
           var move = function() {
             var x = Math.min(0, Math.max(gParentSize.width - width, d3.event.translate[0]));

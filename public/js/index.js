@@ -10,8 +10,12 @@ var weeklyGauge;
 
 $(function () {
 
-  $('#statusDetailModal').on('shown.bs.modal', function () {
-    initD3Timeline();
+  /**
+   * モーダルオープンイベント
+   */
+  $('#statusDetailModal').on('shown.bs.modal', function (e) {
+    var id = $(e.target).attr('data-id');
+    initTimelines(id);
   })
 
   /**
@@ -19,6 +23,7 @@ $(function () {
    */
   $('#statusDetailModal').on('hidden.bs.modal', function (e) {
     weeklyGauge.update(0); //ゲージを0にする
+    clearTimelines();
   });
 
   initDb();
@@ -198,52 +203,94 @@ function updateWeeklyGauge(memberId) {
   });
 }
 
-function initD3Timeline() {
-  var testData = [
-    {
-      class: "20180820",
-      label: "2018/08/20",
-      times: [
-        {
-          "color": "white",
-          "starting_time": 1534690800000,
-          "ending_time": 1534717200000
-        },
-        {
-          "color": "#b0c4de",
-          "label": "在室",
-          "starting_time": 1534717200000,
-          "ending_time": 1534777200000
-        }
-      ],
-    },
-    {
-      class: "20180821",
-      label: "2018/08/21",
-      times: [
-        {
-          "color": "white",
-          "starting_time": 1534690800000,
-          "ending_time": 1534717200000
-        },
-        {
-          "color": "#b0c4de",
-          "label": "在室",
-          "starting_time": 1534717200000,
-          "ending_time": 1534777200000
-        }
-      ],
-    },
-  ];
+/**
+ * タイムラインをDBから取得して設定します。
+ * @param {Number} memberId メンバーID
+ */
+function initTimelines(memberId) {
+  const GET_DAY_COUNT = 7; //1週間
+  var wNames = ['日', '月', '火', '水', '木', '金', '土'];
 
-  var width = 500;
+  var db = firebase.database();
+  //一週間分のログを取得
+  db.ref('/logs/' + memberId).orderByKey().limitToLast(GET_DAY_COUNT).once('value').then(function (snapshot) {
+    console.log(snapshot.val());
+
+    for (var d_count = 1; d_count <= GET_DAY_COUNT; d_count++) {
+      //ログのKeyを取得
+      var nowDate = new Date();
+      nowDate.setDate(nowDate.getDate() - GET_DAY_COUNT + d_count);
+      var date_key = "" + nowDate.getFullYear() + ("0" + (nowDate.getMonth() + 1)).slice(-2) + ("0" + nowDate.getDate()).slice(-2);
+      var changeTimes = [];
+      var stateTexts = [];
+      var colors = [];
+      if (snapshot.hasChild(date_key)) {
+        //とある日のログがある
+        snapshot.child(date_key).forEach(function (logSnap) {
+          changeTimes.push(new Date(logSnap.child('date').val()));
+          var stateId = logSnap.child('update_status').val();
+          stateTexts.push(statusSnap[stateId]["name"]);
+          colors.push(statusSnap[stateId]["hcolor-bg"]);
+        });
+        changeTimes.push(new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), 23, 59, 59, 999));
+
+        //データの生成
+        var times = []
+        for(var i = 0; i < stateTexts.length; i++) {
+          times.push({
+            "color": colors[i],
+            //"label": stateTexts[i],
+            "starting_time": changeTimes[i].getTime(),
+            "ending_time": changeTimes[i+1].getTime(), //changeTimesは必ず一つ多いので安全
+          })
+        }
+
+        var data = [
+          {
+            class: date_key,
+            label: "" + nowDate.getFullYear() + "/" + (nowDate.getMonth() + 1) + "/" + nowDate.getDate() + "(" + wNames[nowDate.getDay()] + ")",
+            times: times,
+          }
+        ];
+        addTimeline(data, nowDate);
+      }else {
+        //ログなし(本来はほぼありえないと思う)
+        var data = [
+          {
+            class: date_key,
+            label: "" + nowDate.getFullYear() + "/" + (nowDate.getMonth() + 1) + "/" + nowDate.getDate() + "(" + wNames[nowDate.getDay()] + ")",
+            times: [],
+          },
+        ];
+        addTimeline(data, nowDate);
+      }
+    }
+  });
+}
+
+/**
+ * タイムラインを追加します。
+ * @param {D3TimeLineData} data タイムラインデータ
+ * @param {Date} date タイムラインの日付
+ */
+function addTimeline(data, date) {
+  var startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0); 
+  var endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  var width = 600;
   var chart = d3.timeline().tickFormat({
     format: d3.time.format("%H"),
     tickTime: d3.time.hours,
     tickInterval: 6,
     tickSize: 2
-  }).margin({left: 120, top: 100, right: 30, bottom: 10});
-  var svg = d3.select("#timeline1").append("svg").attr("width", width)
-    .datum(testData).call(chart);
-  console.log("initD3COmplete");
+  }).margin({left: 150, top: 10, right: 20, bottom: 10})
+  .beginning(startDate.getTime()).ending(endDate.getTime());
+  var svg = d3.select("#timeline").append("svg").attr("width", width)
+    .datum(data).call(chart);
+}
+
+/**
+ * タイムラインを初期化します。
+ */
+function clearTimelines() {
+  $("#timeline").empty();
 }
