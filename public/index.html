@@ -56,6 +56,7 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
   <script src="https://d3js.org/d3.v3.min.js" language="JavaScript"></script>
   <script src="js/lib/liquidFillGauge.js" language="JavaScript"></script>
+  <script src="js/lib/d3-timeline.js"></script>
   <script src="js/index.js"></script>
 
   <h1 style="margin: 2%; font-size: 5vw">早川研究室　在室状況</h1>
@@ -81,7 +82,7 @@
   <!-- ステータス表示部ここまで-->
   <!-- ステータス詳細モーダルここから-->
   <div id="statusDetailModal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">ステータス：
@@ -96,6 +97,9 @@
             <h5>直近一週間の在室率：</h5>
             <svg id="weeklyGauge" width="100" height="100"></svg>
           </div>
+          <h5>タイムライン：</h5>
+          <div id="timeline1"></div>
+          <hr />
           <p>※このページからステータス更新は行なえません。スマートフォンアプリか研究室前のサイネージから更新してください。</p>
         </div>
       </div>

@@ -10,13 +10,16 @@ var weeklyGauge;
 
 $(function () {
 
+  $('#statusDetailModal').on('shown.bs.modal', function () {
+    initD3Timeline();
+  })
+
   /**
    * モーダルクローズイベント
    */
   $('#statusDetailModal').on('hidden.bs.modal', function (e) {
     weeklyGauge.update(0); //ゲージを0にする
   });
-
 
   initDb();
   initWeeklyGauge();
@@ -116,6 +119,7 @@ function showStatusDetail(obj) {
   $('#statusDetailModal').attr('data-id', $(obj).attr('data-id'));
   $(obj).attr('data-lastUpdateIsAuto') == "true" ? $("#statusDetail-lastUpdateIsAuto").text("自動更新") : $("#statusDetail-lastUpdateIsAuto").text("手動更新")
   $('#statusDetailModal').modal();
+
 }
 
 /**
@@ -192,4 +196,54 @@ function updateWeeklyGauge(memberId) {
       weeklyGauge.update(percent.toFixed(1));
     }
   });
+}
+
+function initD3Timeline() {
+  var testData = [
+    {
+      class: "20180820",
+      label: "2018/08/20",
+      times: [
+        {
+          "color": "white",
+          "starting_time": 1534690800000,
+          "ending_time": 1534717200000
+        },
+        {
+          "color": "#b0c4de",
+          "label": "在室",
+          "starting_time": 1534717200000,
+          "ending_time": 1534777200000
+        }
+      ],
+    },
+    {
+      class: "20180821",
+      label: "2018/08/21",
+      times: [
+        {
+          "color": "white",
+          "starting_time": 1534690800000,
+          "ending_time": 1534717200000
+        },
+        {
+          "color": "#b0c4de",
+          "label": "在室",
+          "starting_time": 1534717200000,
+          "ending_time": 1534777200000
+        }
+      ],
+    },
+  ];
+
+  var width = 500;
+  var chart = d3.timeline().tickFormat({
+    format: d3.time.format("%H"),
+    tickTime: d3.time.hours,
+    tickInterval: 6,
+    tickSize: 2
+  }).margin({left: 120, top: 100, right: 30, bottom: 10});
+  var svg = d3.select("#timeline1").append("svg").attr("width", width)
+    .datum(testData).call(chart);
+  console.log("initD3COmplete");
 }
