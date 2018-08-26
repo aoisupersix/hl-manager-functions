@@ -275,14 +275,17 @@ function initTimelines(memberId) {
  */
 function addTimeline(data, date) {
   var startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0); 
-  var endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-  var width = 600;
+  var endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0, 0, 0);
+  var width = 700;
+  if(window.innerWidth < width + 50) {
+    width = window.innerWidth - 50;
+  }
   var chart = d3.timeline().tickFormat({
     format: d3.time.format("%H"),
     tickTime: d3.time.hours,
     tickInterval: 6,
     tickSize: 2
-  }).margin({left: 150, top: 10, right: 20, bottom: 10})
+  }).margin({left: 120, top: 10, right: 20, bottom: 10})
   .beginning(startDate.getTime()).ending(endDate.getTime());
   var svg = d3.select("#timeline").append("svg").attr("width", width)
     .datum(data).call(chart);
