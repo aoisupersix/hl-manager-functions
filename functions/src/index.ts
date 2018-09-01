@@ -82,6 +82,56 @@ export const initDailyLog = functions.https.onRequest((req, res) => {
 });
 
 /**
+ * ※CRON用（通常は呼ばないこと）
+ * 3ヶ月以上古いログを削除します。
+ * Method: PUT
+ * Query {
+ *   key : 認証用キー
+ * }
+ */
+export const deleteOldLogs = functions.https.onRequest((req, res) => {
+    //リクエストがPUTではない
+    if(req.method !== 'PUT') {
+        return res.status(405).send("This functions is only used to 'PUT' method.");
+    }
+    //パラメータ不足
+    if(util.ContainsUndefined(req.query.key)) {
+        return res.status(400).send("Invalid query parameters.");
+    }
+    const key = req.query.key;
+
+    //キーが異なる
+    if (!secureCompare(key, functions.config().service_account.key)) {
+        console.log('The key provided in the request does not match the key set in the environment. Check that', key,
+            'matches the cron.key attribute in `firebase env:get`');
+        return res.status(403).send('Security key does not match. Make sure your "key" URL query parameter matches the ' +
+            'cron.key environment variable.');
+    }
+
+    //3ヶ月以上古いログの削除
+    const sepDate = new Date();
+    sepDate.setMonth(sepDate.getMonth() -3);
+    ref.child('/logs').orderByKey().once("value", (snap) => {
+        snap.forEach((memLogs) => {
+            console.log("memLogs:" + memLogs.key)
+            memLogs.forEach((log) => {
+                const dStr = log.key.slice(0, 4) + "/" + log.key.slice(4, 6) + "/" + log.key.slice(6, 8) + " 00:00:00";
+                const d = new Date(dStr);
+                console.log("sepDate:" + sepDate.toString() + ",date:" + d.toString());
+                if(d < sepDate) {
+                    console.log("rem:" + log.key);
+                    log.ref.remove();
+                }
+                return null;
+            })
+            return null;
+        });
+    });
+
+    return res.status(200).send("done.");
+});
+
+/**
  * パラメータに与えられたデータの期間内にステータスが保持された時間を分単位で取得します。
  * Method: All
  * Query: {
