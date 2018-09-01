@@ -5,19 +5,5 @@
       "npm --prefix \"%RESOURCE_DIR%\" run build"
     ],
     "source": "functions"
-  },
-  "hosting": {
-    "public": "public",
-    "rewrites": [
-      {
-        "source": "/holdTime",
-        "function": "holdTime"
-      }
-    ],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
   }
 }
