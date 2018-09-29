@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 
 import { adminSdk } from './firebaseConfig'
-import { Identifiers } from './geofenceIdentifiers'
+import { Identifiers } from './const/geofenceIdentifiers'
 import * as dUtil from './utils/dateUtil';
 
 const ref = adminSdk.database().ref();
