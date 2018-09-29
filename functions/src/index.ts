@@ -3,6 +3,7 @@ import * as secureCompare from 'secure-compare';
 
 import { adminSdk } from './firebaseConfig'
 import { statusUpdater, deviceUpdater, geofenceStatusInitializer } from './dbtriggers'
+import { sendNotification } from './notification'
 import * as util from './utils/util';
 import * as dUtil from './utils/dateUtil';
 
@@ -13,6 +14,21 @@ export {
     deviceUpdater,
     geofenceStatusInitializer,
 }
+
+export const sendNotificationTest = functions.https.onRequest((req, res) => {
+    //パラメータ不足
+    if(util.ContainsUndefined(req.query.token)) {
+        return res.status(400).send("Invalid query parameters.");
+    }
+    const token = req.query.token;
+
+    return sendNotification(token, "通知テスト", "functionsからのFCM通知です。", "")
+    .then((val) => {
+        res.status(200).send(val);
+    }).catch((reason) => {
+        res.status(500).send(reason);
+    });
+})
 
 /**
  * ※CRON用（通常は呼ばないこと）
