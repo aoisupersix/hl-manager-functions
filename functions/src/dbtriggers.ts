@@ -30,3 +30,16 @@ export const statusReferences = functions.database.ref('/members/{memberId}/stat
         }
     );
 });
+
+/**
+ * DBトリガー
+ * deviceが更新された際に最終更新を更新します。
+ */
+export const deviceUpdater = functions.database.ref('/devices/{deviceId}').onUpdate((_, context) => {
+  //更新時間
+  const nowDate = dUtil.getJstDate();
+  const update_date = dUtil.getDateString(nowDate);
+
+  //最終更新の更新
+  return ref.child(`/members/${context.params.deviceId}/last_update_date`).set(update_date)
+})
