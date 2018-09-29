@@ -7,9 +7,23 @@ const dbtriggers_1 = require("./dbtriggers");
 exports.statusUpdater = dbtriggers_1.statusUpdater;
 exports.deviceUpdater = dbtriggers_1.deviceUpdater;
 exports.geofenceStatusInitializer = dbtriggers_1.geofenceStatusInitializer;
+const notification_1 = require("./notification");
 const util = require("./utils/util");
 const dUtil = require("./utils/dateUtil");
 const ref = firebaseConfig_1.adminSdk.database().ref();
+exports.sendNotificationTest = functions.https.onRequest((req, res) => {
+    //パラメータ不足
+    if (util.ContainsUndefined(req.query.token)) {
+        return res.status(400).send("Invalid query parameters.");
+    }
+    const token = req.query.token;
+    return notification_1.sendNotification(token, "通知テスト", "functionsからのFCM通知です。", "")
+        .then((val) => {
+        res.status(200).send(val);
+    }).catch((reason) => {
+        res.status(500).send(reason);
+    });
+});
 /**
  * ※CRON用（通常は呼ばないこと）
  * 0:00に全てのメンバーのログの初期データをデータベースに生成します。
