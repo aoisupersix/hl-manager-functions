@@ -1,11 +1,10 @@
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
-import * as util from './utils/util';
+
+import { adminSdk } from './firebaseConfig'
+import { Identifiers } from './geofenceIdentifiers'
 import * as dUtil from './utils/dateUtil';
 
-admin.initializeApp(functions.config().firebase);
-
-const ref = admin.database().ref();
+const ref = adminSdk.database().ref();
 
 /**
  * DBトリガー
@@ -18,17 +17,17 @@ export const statusReferences = functions.database.ref('/members/{memberId}/stat
     const update_date = dUtil.getDateString(nowDate);
     const update_day = dUtil.getDayString(nowDate).replace(/\//g, "");
 
-    //最終更新
-    ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date);
-    ref.child(`/members/${context.params.memberId}/last_status`).set(change.before.val());
-
     //ログ更新
-    return ref.child(`/logs/${context.params.memberId}/${update_day}`).push(
+    return Promise.all([
+      ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date),
+      ref.child(`/members/${context.params.memberId}/last_status`).set(change.before.val()),
+      ref.child(`/logs/${context.params.memberId}/${update_day}`).push(
         {
             date: update_date,
             update_status: change.after.val()
         }
-    );
+      )
+    ]);
 });
 
 /**
@@ -41,5 +40,20 @@ export const deviceUpdater = functions.database.ref('/devices/{deviceId}').onUpd
   const update_date = dUtil.getDateString(nowDate);
 
   //最終更新の更新
-  return ref.child(`/members/${context.params.deviceId}/last_update_date`).set(update_date)
+  return ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date)
+})
+
+/**
+ * DBトリガー
+ * device追加時にジオフェンスのステータスを初期化します。
+ */
+export const geofenceStatusInitializer = functions.database.ref('/devices/{deviceId}').onCreate((snapshot, context) => {
+  console.log('New device created. Initialize geofence status.')
+
+  const dict: { [key: string]: boolean; } = {};
+  Identifiers.forEach(i => dict[i] = false);
+
+  console.log(dict);
+
+  return ref.child(`/devices/${context.params.deviceId}/geofence_status`).set(dict);
 })

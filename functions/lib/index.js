@@ -1,31 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
-const admin = require("firebase-admin");
 const secureCompare = require("secure-compare");
+const firebaseConfig_1 = require("./firebaseConfig");
+const dbtriggers_1 = require("./dbtriggers");
+exports.statusReferences = dbtriggers_1.statusReferences;
+exports.deviceUpdater = dbtriggers_1.deviceUpdater;
+exports.geofenceStatusInitializer = dbtriggers_1.geofenceStatusInitializer;
 const util = require("./utils/util");
 const dUtil = require("./utils/dateUtil");
-admin.initializeApp(functions.config().firebase);
-const ref = admin.database().ref();
-/**
- * DBトリガー
- * statusが更新された際にログと最終更新を更新します。
- */
-exports.statusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
-    console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + change.before.val() + ",status(After):" + change.after.val());
-    //更新時間
-    const nowDate = dUtil.getJstDate();
-    const update_date = dUtil.getDateString(nowDate);
-    const update_day = dUtil.getDayString(nowDate).replace(/\//g, "");
-    //最終更新
-    ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date);
-    ref.child(`/members/${context.params.memberId}/last_status`).set(change.before.val());
-    //ログ更新
-    return ref.child(`/logs/${context.params.memberId}/${update_day}`).push({
-        date: update_date,
-        update_status: change.after.val()
-    });
-});
+const ref = firebaseConfig_1.adminSdk.database().ref();
 /**
  * ※CRON用（通常は呼ばないこと）
  * 0:00に全てのメンバーのログの初期データをデータベースに生成します。
@@ -55,7 +39,7 @@ exports.initDailyLog = functions.https.onRequest((req, res) => {
     nowDate.setHours(0, 0, 0, 0);
     const update_date = dUtil.getDateString(nowDate);
     const update_day = dUtil.getDayString(nowDate).replace(/\//g, "");
-    ref.child("/members").orderByKey().once("value", (snap) => {
+    const promise = ref.child("/members").orderByKey().once("value", (snap) => {
         snap.forEach((member) => {
             //ログ追加
             ref.child(`/logs/${member.key}/${update_day}`).push({
@@ -65,7 +49,12 @@ exports.initDailyLog = functions.https.onRequest((req, res) => {
             return null;
         });
     });
-    return res.status(200).send("done.");
+    promise.then((_) => {
+        return res.status(200).send("done.");
+    }).catch((reason) => {
+        return res.status(500).send(reason);
+    });
+    return res.status(500).send("unknown error.");
 });
 /**
  * ※CRON用（通常は呼ばないこと）
@@ -94,7 +83,7 @@ exports.deleteOldLogs = functions.https.onRequest((req, res) => {
     //3ヶ月以上古いログの削除
     const sepDate = new Date();
     sepDate.setMonth(sepDate.getMonth() - 3);
-    ref.child('/logs').orderByKey().once("value", (snap) => {
+    const promise = ref.child('/logs').orderByKey().once("value", (snap) => {
         snap.forEach((memLogs) => {
             console.log("memLogs:" + memLogs.key);
             memLogs.forEach((log) => {
@@ -103,14 +92,19 @@ exports.deleteOldLogs = functions.https.onRequest((req, res) => {
                 console.log("sepDate:" + sepDate.toString() + ",date:" + d.toString());
                 if (d < sepDate) {
                     console.log("rem:" + log.key);
-                    log.ref.remove();
+                    log.ref.remove().then((_) => { return null; }).catch((reason) => { console.log("remove error:" + reason); return true; });
                 }
                 return null;
             });
             return null;
         });
     });
-    return res.status(200).send("done.");
+    promise.then((_) => {
+        return res.status(200).send("done.");
+    }).catch((reason) => {
+        return res.status(500).send(reason);
+    });
+    return res.status(500).send("unknown error.");
 });
 /**
  * パラメータに与えられたデータの期間内にステータスが保持された時間を分単位で取得します。
