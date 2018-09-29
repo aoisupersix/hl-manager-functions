@@ -10,7 +10,7 @@ const ref = adminSdk.database().ref();
  * DBトリガー
  * statusが更新された際にログと最終更新を更新します。
  */
-export const statusReferences = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
+export const statusUpdater = functions.database.ref('/members/{memberId}/status').onUpdate((change, context) => {
     console.log("UpdateStatus member:" + context.params.memberId + ",status(Before):" + change.before.val() + ",status(After):" + change.after.val());
     //更新時間
     const nowDate = dUtil.getJstDate();
