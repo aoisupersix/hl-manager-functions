@@ -7,6 +7,19 @@ import * as dUtil from './utils/dateUtil';
 const ref = adminSdk.database().ref();
 
 /**
+ * 引数に指定されたデバイスIDのジオフェンス状態を初期化します。
+ * @param deviceId デバイスID
+ */
+function InitializeGeofenceStatus(deviceId: string): Promise<void> {
+  const dict: { [key: string]: boolean; } = {};
+  Identifiers.forEach(i => dict[i] = false);
+
+  console.log(dict);
+
+  return ref.child(`/devices/${deviceId}/geofence_status`).set(dict);
+}
+
+/**
  * DBトリガー
  * statusが更新された際にログと最終更新を更新します。
  */
@@ -40,7 +53,7 @@ export const deviceUpdater = functions.database.ref('/devices/{deviceId}').onUpd
   const update_date = dUtil.getDateString(nowDate);
 
   //最終更新の更新
-  return ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date)
+  return ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date);
 })
 
 /**
@@ -48,12 +61,6 @@ export const deviceUpdater = functions.database.ref('/devices/{deviceId}').onUpd
  * device追加時にジオフェンスのステータスを初期化します。
  */
 export const geofenceStatusInitializer = functions.database.ref('/devices/{deviceId}').onCreate((snapshot, context) => {
-  console.log('New device created. Initialize geofence status.')
-
-  const dict: { [key: string]: boolean; } = {};
-  Identifiers.forEach(i => dict[i] = false);
-
-  console.log(dict);
-
-  return ref.child(`/devices/${context.params.deviceId}/geofence_status`).set(dict);
+  console.log('New device created. Initialize geofence status.');
+  return InitializeGeofenceStatus(context.params.deviceId);
 })
