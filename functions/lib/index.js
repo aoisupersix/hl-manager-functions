@@ -69,7 +69,7 @@ exports.initDailyLog = functions.https.onRequest((req, res) => {
 });
 /**
  * ※CRON用（通常は呼ばないこと）
- * 古いログを削除します。
+ * 3ヶ月以上古いログを削除します。
  * Method: PUT
  * Query {
  *   key : 認証用キー
@@ -77,9 +77,9 @@ exports.initDailyLog = functions.https.onRequest((req, res) => {
  */
 exports.deleteOldLogs = functions.https.onRequest((req, res) => {
     //リクエストがPUTではない
-    // if(req.method !== 'PUT') {
-    //     return res.status(405).send("This functions is only used to 'PUT' method.");
-    // }
+    if (req.method !== 'PUT') {
+        return res.status(405).send("This functions is only used to 'PUT' method.");
+    }
     //パラメータ不足
     if (util.ContainsUndefined(req.query.key)) {
         return res.status(400).send("Invalid query parameters.");
