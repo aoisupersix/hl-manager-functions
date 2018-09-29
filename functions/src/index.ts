@@ -2,14 +2,14 @@ import * as functions from 'firebase-functions';
 import * as secureCompare from 'secure-compare';
 
 import { adminSdk } from './firebaseConfig'
-import { statusReferences, deviceUpdater, geofenceStatusInitializer } from './dbtriggers'
+import { statusUpdater, deviceUpdater, geofenceStatusInitializer } from './dbtriggers'
 import * as util from './utils/util';
 import * as dUtil from './utils/dateUtil';
 
 const ref = adminSdk.database().ref();
 
 export {
-    statusReferences,
+    statusUpdater,
     deviceUpdater,
     geofenceStatusInitializer,
 }

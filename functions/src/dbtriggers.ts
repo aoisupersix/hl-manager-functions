@@ -30,6 +30,23 @@ export const statusUpdater = functions.database.ref('/members/{memberId}/status'
     const update_date = dUtil.getDateString(nowDate);
     const update_day = dUtil.getDayString(nowDate).replace(/\//g, "");
 
+    //更新ステータスが在室であれば、更新されたメンバーのデバイスのジオフェンス状態を初期化
+    const STATUS_REGION_LABORATORY = 2, STATUS_REGION_HOME = 0;
+    const status = parseInt(change.after.val());
+    if (status === STATUS_REGION_LABORATORY || status === STATUS_REGION_HOME) {
+      ref.child('/devices').once('value').then((snap) => {
+        snap.forEach((devices) => {
+          if (parseInt(devices.child('member_id').val()) === parseInt(context.params.memberId)) {
+            console.log("initializeGeofenceStatus");
+            InitializeGeofenceStatus(devices.key).then((_) => { return null; }).catch((reason) => { console.log("deviceGeofenceInitError:" + reason); return null; });
+          }
+          else {
+            return null;
+          }
+        })
+      }).catch((reason) => { console.log(reason); });
+    }
+
     //ログ更新
     return Promise.all([
       ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date),
