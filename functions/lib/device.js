@@ -26,10 +26,10 @@ const ref = firebaseConfig_1.adminSdk.database().ref();
  * @param status ステータスID
  */
 function updateStatus(memberId, status) {
-    return ref.child(`/members/${memberId}`).set({
-        status: status,
-        last_update_is_auto: true
-    });
+    return Promise.all([
+        ref.child(`/members/${memberId}/status`).set(status),
+        ref.child(`/members/${memberId}/last_update_is_auto`).set(true)
+    ]);
 }
 /**
  * Realtime Database Trigger
