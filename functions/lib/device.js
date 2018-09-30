@@ -21,15 +21,6 @@ const states_1 = require("./const/states");
 const dUtil = require("./utils/dateUtil");
 const ref = firebaseConfig_1.adminSdk.database().ref();
 /**
- * 引数に指定されたデバイスIDのジオフェンス状態を初期化します。
- * @param deviceId デバイスID
- */
-function resetGeofenceStatus(deviceId) {
-    const dict = {};
-    geofenceConst.Identifiers.forEach(i => dict[i] = false);
-    return ref.child(`/devices/${deviceId}/geofence_status`).set(dict);
-}
-/**
  * メンバーのステータスを更新します。
  * @param memberId メンバーID
  * @param status ステータスID

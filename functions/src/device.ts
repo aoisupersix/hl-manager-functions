@@ -14,18 +14,6 @@ import * as dUtil from './utils/dateUtil';
 const ref = adminSdk.database().ref();
 
 /**
- * 引数に指定されたデバイスIDのジオフェンス状態を初期化します。
- * @param deviceId デバイスID
- */
-function resetGeofenceStatus(deviceId: string): Promise<void> {
-  const dict: { [key: string]: boolean; } = {};
-  geofenceConst.Identifiers.forEach(i => dict[i] = false);
-
-  return ref.child(`/devices/${deviceId}/geofence_status`).set(dict);
-}
-
-
-/**
  * メンバーのステータスを更新します。
  * @param memberId メンバーID
  * @param status ステータスID

@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
-import { List } from 'linqts';
 
 import { adminSdk } from './firebaseConfig';
+import * as notification from './notification';
 import * as geofenceConst from './const/geofenceIdentifiers';
 import { Status } from './const/states';
 import * as dUtil from './utils/dateUtil';
@@ -17,6 +17,24 @@ function resetGeofenceStatus(deviceId: string): Promise<void> {
   geofenceConst.Identifiers.forEach(i => dict[i] = false);
 
   return ref.child(`/devices/${deviceId}/geofence_status`).set(dict);
+}
+
+/**
+ * メンバーが指定されているデバイスのプッシュ通知トークンを取得します。
+ * @param memberId メンバーID
+ */
+function getFcmTokens(memberId: number): Promise<string[]> {
+  return new Promise(async (resolve, reject) => {
+    const tokens: string[] = [];
+    const devSnaps = await ref.child('devices').once('value');
+    devSnaps.forEach((devSnap) => {
+      if (devSnap.child('member_id').exists() && devSnap.child('fcm_token').exists() && parseInt(devSnap.child('member_id').val()) === memberId) {
+        tokens.push(devSnap.child('fcm_token').val());
+      }
+      return null;
+    });
+    resolve(tokens);
+  });
 }
 
 /**
@@ -44,7 +62,10 @@ export const updateMemberStatus = functions.database.ref('/members/{memberId}/st
   }
 
   // 自動更新であればプッシュ通知送信
-
+  const tokens = await getFcmTokens(parseInt(context.params.memberId));
+  notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${geofenceConst.Identifiers[status]}」に更新しました。`, "")
+    .then((_) => { console.log("プッシュ通知送信完了"); })
+    .catch((reason) => { console.log(`プッシュ通知送信失敗 reason:${reason}`); });
 
   return Promise.all([
     ref.child(`/members/${context.params.memberId}/last_update_date`).set({ // 最終更新の更新
