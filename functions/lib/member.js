@@ -67,14 +67,12 @@ exports.updateMemberStatus = functions.database.ref('/members/{memberId}/status'
     }
     // 自動更新であればプッシュ通知送信
     const tokens = yield getFcmTokens(parseInt(context.params.memberId));
-    notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${geofenceConst.Identifiers[status]}」に更新しました。`, "")
+    notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${states_1.Status[status]}」に更新しました。`, "")
         .then((_) => { console.log("プッシュ通知送信完了"); })
         .catch((reason) => { console.log(`プッシュ通知送信失敗 reason:${reason}`); });
     return Promise.all([
-        ref.child(`/members/${context.params.memberId}`).set({
-            last_update_date: update_date,
-            last_status: change.before.val()
-        }),
+        ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date),
+        ref.child(`/members/${context.params.memberId}/last_status`).set(change.before.val()),
         ref.child(`/logs/${context.params.memberId}/${update_day}`).push(// ログ更新
         {
             date: update_date,
