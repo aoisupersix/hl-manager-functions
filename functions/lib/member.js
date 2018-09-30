@@ -71,7 +71,7 @@ exports.updateMemberStatus = functions.database.ref('/members/{memberId}/status'
         .then((_) => { console.log("プッシュ通知送信完了"); })
         .catch((reason) => { console.log(`プッシュ通知送信失敗 reason:${reason}`); });
     return Promise.all([
-        ref.child(`/members/${context.params.memberId}/last_update_date`).set({
+        ref.child(`/members/${context.params.memberId}`).set({
             last_update_date: update_date,
             last_status: change.before.val()
         }),

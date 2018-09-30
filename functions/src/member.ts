@@ -68,7 +68,7 @@ export const updateMemberStatus = functions.database.ref('/members/{memberId}/st
     .catch((reason) => { console.log(`プッシュ通知送信失敗 reason:${reason}`); });
 
   return Promise.all([
-    ref.child(`/members/${context.params.memberId}/last_update_date`).set({ // 最終更新の更新
+    ref.child(`/members/${context.params.memberId}`).set({ // 最終更新の更新
       last_update_date: update_date,
       last_status: change.before.val()
     }),
