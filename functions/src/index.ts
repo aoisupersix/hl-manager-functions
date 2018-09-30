@@ -2,7 +2,8 @@ import * as functions from 'firebase-functions';
 import * as secureCompare from 'secure-compare';
 
 import { adminSdk } from './firebaseConfig'
-import { statusUpdater, deviceUpdater, geofenceStatusInitializer } from './dbtriggers'
+import { updateDeviceInfo } from './device'
+import { updateMemberStatus } from './member'
 import { sendNotification } from './notification'
 import * as util from './utils/util';
 import * as dUtil from './utils/dateUtil';
@@ -10,9 +11,8 @@ import * as dUtil from './utils/dateUtil';
 const ref = adminSdk.database().ref();
 
 export {
-    statusUpdater,
-    deviceUpdater,
-    geofenceStatusInitializer,
+    updateMemberStatus,
+    updateDeviceInfo
 }
 
 export const sendNotificationTest = functions.https.onRequest((req, res) => {
