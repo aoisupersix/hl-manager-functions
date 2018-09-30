@@ -76,13 +76,11 @@ export const initDailyLog = functions.https.onRequest((req, res) => {
         });
     });
 
-    promise.then((_) => {
-        return res.status(200).send("done.");
+    return promise.then((_) => {
+        res.status(200).send("done.");
     }).catch((reason) => {
-        return res.status(500).send(reason);
+        res.status(500).send(reason);
     });
-
-    return res.status(500).send("unknown error.");
 });
 
 /**
@@ -132,13 +130,11 @@ export const deleteOldLogs = functions.https.onRequest((req, res) => {
         });
     });
 
-    promise.then((_) => {
-        return res.status(200).send("done.");
+    return promise.then((_) => {
+        res.status(200).send("done.");
     }).catch((reason) => {
-        return res.status(500).send(reason);
+        res.status(500).send(reason);
     });
-
-    return res.status(500).send("unknown error.");
 });
 
 /**
