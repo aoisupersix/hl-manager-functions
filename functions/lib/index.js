@@ -63,12 +63,11 @@ exports.initDailyLog = functions.https.onRequest((req, res) => {
             return null;
         });
     });
-    promise.then((_) => {
-        return res.status(200).send("done.");
+    return promise.then((_) => {
+        res.status(200).send("done.");
     }).catch((reason) => {
-        return res.status(500).send(reason);
+        res.status(500).send(reason);
     });
-    return res.status(500).send("unknown error.");
 });
 /**
  * ※CRON用（通常は呼ばないこと）
@@ -113,12 +112,11 @@ exports.deleteOldLogs = functions.https.onRequest((req, res) => {
             return null;
         });
     });
-    promise.then((_) => {
-        return res.status(200).send("done.");
+    return promise.then((_) => {
+        res.status(200).send("done.");
     }).catch((reason) => {
-        return res.status(500).send(reason);
+        res.status(500).send(reason);
     });
-    return res.status(500).send("unknown error.");
 });
 /**
  * パラメータに与えられたデータの期間内にステータスが保持された時間を分単位で取得します。
