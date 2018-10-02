@@ -67,9 +67,9 @@ exports.updateMemberStatus = functions.database.ref('/members/{memberId}/status'
     }
     // 自動更新であればプッシュ通知送信
     const tokens = yield getFcmTokens(parseInt(context.params.memberId));
-    notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${states_1.Status[status]}」に更新しました。`, "")
-        .then((_) => { console.log("プッシュ通知送信完了"); })
-        .catch((reason) => { console.log(`プッシュ通知送信失敗 reason:${reason}`); });
+    if (tokens.length > 0) {
+        yield notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${states_1.Status[status]}」に更新しました。`, "");
+    }
     return Promise.all([
         ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date),
         ref.child(`/members/${context.params.memberId}/last_status`).set(change.before.val()),
