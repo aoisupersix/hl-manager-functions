@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions';
 import * as secureCompare from 'secure-compare';
 
 import { adminSdk } from './firebaseConfig'
-import { updateDeviceInfo } from './device'
+import { initializeDevice, updateDeviceInfo } from './device'
 import { updateMemberStatus } from './member'
 import * as util from './utils/util';
 import * as dUtil from './utils/dateUtil';
@@ -10,6 +10,7 @@ import * as dUtil from './utils/dateUtil';
 const ref = adminSdk.database().ref();
 
 export {
+    initializeDevice,
     updateMemberStatus,
     updateDeviceInfo
 }

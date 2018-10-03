@@ -33,6 +33,18 @@ function updateStatus(memberId, status) {
 }
 /**
  * Realtime Database Trigger
+ * 新たにデバイスが追加された際に各種データを初期化します。
+ */
+exports.initializeDevice = functions.database.ref('/devices/{deviceId}').onCreate((snapshot, context) => {
+    //ジオフェンス状態初期データ
+    const geofenceStates = new linqts_1.List(geofenceConst.Identifiers);
+    const promises = geofenceStates.Where(g => !snapshot.hasChild(`geofence_status/${g}`))
+        .Select(g => ref.child(`devices/${snapshot.key}/geofence_status/${g}`).set(false))
+        .ToArray();
+    return Promise.all(promises);
+});
+/**
+ * Realtime Database Trigger
  * /deviceが更新された際にステータスと最終更新を更新します。
  */
 exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_status').onUpdate((change, context) => __awaiter(this, void 0, void 0, function* () {
