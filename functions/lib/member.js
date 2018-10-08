@@ -66,9 +66,12 @@ exports.updateMemberStatus = functions.database.ref('/members/{memberId}/status'
         });
     }
     // 自動更新であればプッシュ通知送信
-    const tokens = yield getFcmTokens(parseInt(context.params.memberId));
-    if (tokens.length > 0) {
-        yield notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${states_1.Status[status]}」に更新しました。`, "");
+    const lastUpdateIsAuto = yield ref.child(`/members/${context.params.memberId}/last_update_is_auto`).once('value');
+    if (lastUpdateIsAuto.val() !== false) {
+        const tokens = yield getFcmTokens(parseInt(context.params.memberId));
+        if (tokens.length > 0) {
+            yield notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${states_1.Status[status]}」に更新しました。`, "");
+        }
     }
     return Promise.all([
         ref.child(`/members/${context.params.memberId}/last_update_date`).set(update_date),

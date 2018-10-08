@@ -62,9 +62,12 @@ export const updateMemberStatus = functions.database.ref('/members/{memberId}/st
   }
 
   // 自動更新であればプッシュ通知送信
-  const tokens = await getFcmTokens(parseInt(context.params.memberId));
-  if (tokens.length > 0) {
-    await notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${Status[status]}」に更新しました。`, "");
+  const lastUpdateIsAuto = await ref.child(`/members/${context.params.memberId}/last_update_is_auto`).once('value');
+  if (lastUpdateIsAuto.val() !== false) {
+    const tokens = await getFcmTokens(parseInt(context.params.memberId));
+    if (tokens.length > 0) {
+      await notification.sendNotification(tokens, "ステータス自動更新", `ステータスを「${Status[status]}」に更新しました。`, "");
+    }
   }
 
   return Promise.all([
