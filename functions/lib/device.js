@@ -51,6 +51,8 @@ exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_
     //更新時間
     const nowDate = dUtil.getJstDate();
     const update_date = dUtil.getDateString(nowDate);
+    //最終更新の更新
+    yield ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date);
     //メンバーIDとステータス取得
     const devSnap = yield ref.child(`/devices/${context.params.deviceId}`).once('value');
     if (!devSnap.hasChild('member_id')) {
@@ -65,6 +67,10 @@ exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_
         console.log(`error. member id [ ${memberId} ] is not found.`);
         return change.after;
     }
+    if (memSnap.val() === null) {
+        console.log(`error. member id [ ${memberId} ] is not found.`);
+        return change.after;
+    }
     const nowStatus = memSnap.val();
     //ジオフェンス状態取得
     const geofenceStates = new linqts_1.List(geofenceConst.Identifiers);
@@ -76,8 +82,6 @@ exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_
     else if (nowStatus === states_1.Status.学内 && states.All(_ => !_)) {
         yield updateStatus(parseInt(memberId), states_1.Status.帰宅);
     }
-    //最終更新の更新
-    yield ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date);
     return change.after;
 }));
 //# sourceMappingURL=device.js.map
