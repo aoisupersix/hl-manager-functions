@@ -72,12 +72,13 @@ export const updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geof
   //ジオフェンス状態取得
   const geofenceStates = new List<string>(geofenceConst.Identifiers);
   const states = geofenceStates.Select(g => change.after.child(`${g}`).val());
+  console.log("geofence states: " + states.ToArray().join(','))
 
   //条件を満たしていればステータス更新
   if (nowStatus === Status.帰宅 && states.Any(_ => _)) {
-    await updateStatus(parseInt(memberId), Status.学内);
+    return updateStatus(parseInt(memberId), Status.学内);
   } else if (nowStatus === Status.学内 && states.All(_ => !_)) {
-    await updateStatus(parseInt(memberId), Status.帰宅);
+    return updateStatus(parseInt(memberId), Status.帰宅);
   }
 
   return change.after;

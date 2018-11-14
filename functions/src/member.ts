@@ -48,21 +48,21 @@ export const updateMemberStatus = functions.database.ref('/members/{memberId}/st
   const update_date = dUtil.getDateString(nowDate);
   const update_day = dUtil.getDayString(nowDate).replace(/\//g, "");
 
-  // 更新ステータスが帰宅であれば、更新されたメンバーのデバイスのジオフェンス状態を初期化
+  // 更新ステータスが帰宅でかつ手動更新であれば、更新されたメンバーのデバイスのジオフェンス状態を初期化
   const status = parseInt(change.after.val());
-  if (status === Status.帰宅) {
+  const lastUpdateIsAuto = await ref.child(`/members/${context.params.memberId}/last_update_is_auto`).once('value');
+  if (status === Status.帰宅 && lastUpdateIsAuto.val() === false) {
     const snap = await ref.child('/devices').once('value');
     snap.forEach((devices) => {
       if (parseInt(devices.child('member_id').val()) === parseInt(context.params.memberId)) {
-        console.log("initializeGeofenceStatus");
-        resetGeofenceStatus(devices.key).then((_) => { return null; }).catch((reason) => { console.log("deviceGeofenceInitError:" + reason); return null; });
+        console.log("Member status has been manually updated to 0, initialize the geofence state.");
+        resetGeofenceStatus(devices.key).then((_) => { return null; }).catch((reason) => { console.log("failed initialize geofences:" + reason); return null; });
       }
       else { return null; }
     });
   }
 
   // 自動更新であればプッシュ通知送信
-  const lastUpdateIsAuto = await ref.child(`/members/${context.params.memberId}/last_update_is_auto`).once('value');
   if (lastUpdateIsAuto.val() !== false) {
     const tokens = await getFcmTokens(parseInt(context.params.memberId));
     if (tokens.length > 0) {
