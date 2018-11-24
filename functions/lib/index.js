@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const secureCompare = require("secure-compare");
+const Moment = require("moment-timezone");
 const firebaseConfig_1 = require("./firebaseConfig");
 const device_1 = require("./device");
 exports.initializeDevice = device_1.initializeDevice;
@@ -16,6 +17,8 @@ exports.updateGeofenceStatus = geofenceHttpFunction_1.updateGeofenceStatus;
 const util = require("./utils/util");
 const dUtil = require("./utils/dateUtil");
 const ref = firebaseConfig_1.adminSdk.database().ref();
+// タイムゾーン
+Moment.tz.setDefault("Asia/Tokyo");
 /**
  * ※CRON用（通常は呼ばないこと）
  * 0:00に全てのメンバーのログの初期データをデータベースに生成します。

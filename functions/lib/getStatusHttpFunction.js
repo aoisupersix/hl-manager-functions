@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
-const Moment = require("moment");
+const Moment = require("moment-timezone");
 const linqts_1 = require("linqts");
 const firebaseConfig_1 = require("./firebaseConfig");
 const util = require("./utils/util");
@@ -113,10 +113,10 @@ exports.getTimelineData = functions.https.onRequest((req, res) => __awaiter(this
             const stateTexts = []; // ステータステキスト
             const colors = []; // バーカラー
             logsSnap.child(dateKey).forEach(logSnap => {
-                const logDate = new Date(logSnap.child('date').val());
+                const logDate = Moment(logSnap.child('date').val()).clone().subtract(9, 'hour');
                 const logState = logSnap.child('update_status').val();
                 if (logState !== nowState) {
-                    changeTimes.push(logDate);
+                    changeTimes.push(logDate.valueOf());
                     stateIds.push(logState);
                     stateTexts.push(statusSnap.child(`${logState}/name`).val());
                     colors.push(statusSnap.child(`${logState}/hcolor-bg`).val());
@@ -126,10 +126,10 @@ exports.getTimelineData = functions.https.onRequest((req, res) => __awaiter(this
             });
             // 最終時刻を追加（ココ重要）
             if (nowDate.date() === Moment().date()) {
-                changeTimes.push(new Date());
+                changeTimes.push(Moment().valueOf());
             }
             else {
-                changeTimes.push(nowDate.clone().hours(23).minutes(59).seconds(59).milliseconds(999).toDate());
+                changeTimes.push(nowDate.clone().hours(23).minutes(59).seconds(59).milliseconds(999).valueOf());
             }
             // タイムラインデータ生成
             timelines.push(createOneDayTimeLine(statusSnap.val(), nowDate, changeTimes, stateIds, stateTexts, colors));
@@ -149,8 +149,7 @@ exports.getTimelineData = functions.https.onRequest((req, res) => __awaiter(this
  */
 function createOneDayTimeLine(states, date, changeTimes, stateIds, stateTexts, colors) {
     const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土']; // 曜日名
-    const d = Moment(date);
-    const dateStr = d.format(`YYYY/MM/DD (${DAY_NAMES[d.day()]})`);
+    const dateStr = date.format(`YYYY/MM/DD (${DAY_NAMES[date.day()]})`);
     // 軸データ生成(帰宅は追加しない)
     const data = [['Title', 'Status', 'Start Time', 'End Time']];
     for (let i = 0; i < stateTexts.length; i++) {
@@ -173,8 +172,8 @@ function createOneDayTimeLine(states, date, changeTimes, stateIds, stateTexts, c
         data.push([
             dateStr,
             'データなし',
-            d.clone().hours(0).minutes(0).seconds(0).milliseconds(0).toDate(),
-            d.clone().hours(23).minutes(59).seconds(59).milliseconds(999).toDate()
+            date.clone().hours(0).minutes(0).seconds(0).milliseconds(0).valueOf(),
+            date.clone().hours(23).minutes(59).seconds(59).milliseconds(999).valueOf()
         ]);
         retColors.push(states[0]['hcolor-bg']);
     }
@@ -188,8 +187,8 @@ function createOneDayTimeLine(states, date, changeTimes, stateIds, stateTexts, c
                 showBarLabels: false
             },
             hAxis: {
-                minValue: d.clone().hours(0).minutes(0).seconds(0).milliseconds(0).toDate(),
-                maxValue: d.clone().hours(23).minutes(59).seconds(59).milliseconds(999).toDate()
+                minValue: date.clone().hours(0).minutes(0).seconds(0).milliseconds(0).valueOf(),
+                maxValue: date.clone().hours(23).minutes(59).seconds(59).milliseconds(999).valueOf()
             },
             colors: retColors
         }

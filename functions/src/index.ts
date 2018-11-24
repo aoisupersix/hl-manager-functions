@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as secureCompare from 'secure-compare';
+import * as Moment from 'moment-timezone'
 
 import { adminSdk } from './firebaseConfig'
 import { initializeDevice, updateDeviceInfo } from './device'
@@ -10,6 +11,9 @@ import * as util from './utils/util';
 import * as dUtil from './utils/dateUtil';
 
 const ref = adminSdk.database().ref();
+
+// タイムゾーン
+Moment.tz.setDefault("Asia/Tokyo")
 
 export {
     initializeDevice,

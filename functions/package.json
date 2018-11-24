@@ -15,6 +15,7 @@
     "firebase-functions": "^2.0.0",
     "linqts": "^1.12.0",
     "moment": "^2.22.2",
+    "moment-timezone": "^0.5.23",
     "secure-compare": "^3.0.1"
   },
   "devDependencies": {
