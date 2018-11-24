@@ -4,6 +4,7 @@ import * as secureCompare from 'secure-compare';
 import { adminSdk } from './firebaseConfig'
 import { initializeDevice, updateDeviceInfo } from './device'
 import { updateMemberStatus } from './member'
+import { updateGeofenceStatus } from './geofenceHttpFunction'
 import * as util from './utils/util';
 import * as dUtil from './utils/dateUtil';
 
@@ -12,7 +13,8 @@ const ref = adminSdk.database().ref();
 export {
     initializeDevice,
     updateMemberStatus,
-    updateDeviceInfo
+    updateDeviceInfo,
+    updateGeofenceStatus
 }
 
 /**
