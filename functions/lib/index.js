@@ -8,6 +8,9 @@ exports.initializeDevice = device_1.initializeDevice;
 exports.updateDeviceInfo = device_1.updateDeviceInfo;
 const member_1 = require("./member");
 exports.updateMemberStatus = member_1.updateMemberStatus;
+const getStatusHttpFunction_1 = require("./getStatusHttpFunction");
+exports.holdTime = getStatusHttpFunction_1.holdTime;
+exports.getTimelineData = getStatusHttpFunction_1.getTimelineData;
 const geofenceHttpFunction_1 = require("./geofenceHttpFunction");
 exports.updateGeofenceStatus = geofenceHttpFunction_1.updateGeofenceStatus;
 const util = require("./utils/util");
@@ -105,70 +108,6 @@ exports.deleteOldLogs = functions.https.onRequest((req, res) => {
         res.status(200).send("done.");
     }).catch((reason) => {
         res.status(500).send(reason);
-    });
-});
-/**
- * パラメータに与えられたデータの期間内にステータスが保持された時間を分単位で取得します。
- * Method: All
- * Query: {
- *   memberId : 取得対象のメンバーID
- *   stateId : 取得対象のステータスID
- *   startDate : 取得開始期間
- *   endDate : 取得終了時間
- * }
- */
-exports.holdTime = functions.https.onRequest((req, res) => {
-    //パラメータ不足
-    if (util.ContainsUndefined(req.query.memberId, req.query.stateId, req.query.startDate, req.query.endDate)) {
-        return res.status(403).send("Invalid query parameters.");
-    }
-    const memId = +req.query.memberId;
-    const stateId = +req.query.stateId;
-    const startDate = new Date(req.query.startDate);
-    const endDate = new Date(req.query.endDate);
-    //dateのHour以下は必ず0で初期化する
-    startDate.setHours(0);
-    startDate.setMinutes(0);
-    startDate.setSeconds(0);
-    startDate.setMilliseconds(0);
-    endDate.setHours(0);
-    endDate.setMinutes(0);
-    endDate.setSeconds(0);
-    endDate.setMilliseconds(0);
-    return ref.child(`/logs/${memId}/`).orderByKey().once("value")
-        .then((snap) => {
-        let holdMinute = 0;
-        for (const date = startDate; date.getTime() <= endDate.getTime(); date.setDate(date.getDate() + 1)) {
-            const log_key = dUtil.getLogsKeyString(date);
-            console.log("================" + log_key + "===============");
-            if (snap.hasChild(log_key)) {
-                //ステータス時間の計測
-                let nowDate = date;
-                let nowState = -1;
-                snap.child(log_key).forEach((logSnap) => {
-                    const d = new Date(logSnap.child('date').val());
-                    const val = logSnap.child('update_status').val();
-                    console.log(`log_key Loop(log_key:${log_key},nowDate:${dUtil.getDateString(nowDate)},nowState:${nowState},holdMinute:${holdMinute} => d:${dUtil.getDateString(d)},val:${val})`);
-                    if (val !== nowState && nowState === stateId) {
-                        //ステータス時間追加
-                        console.log(`addHoldMinute Before: ${dUtil.getDateString(nowDate)}, After: ${dUtil.getDateString(d)}, Sub:${Math.floor((d.getTime() - nowDate.getTime()) / (1000 * 60))}`);
-                        holdMinute += Math.floor((d.getTime() - nowDate.getTime()) / (1000 * 60));
-                    }
-                    nowDate = d;
-                    nowState = val;
-                    return false;
-                });
-                if (nowState === stateId) {
-                    //ステータス時間追加
-                    const ed = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-                    console.log(`addHoldMinute Before: ${dUtil.getDateString(nowDate)}, After: ${dUtil.getDateString(ed)}, Sub:${Math.floor((ed.getTime() - nowDate.getTime()) / (1000 * 60))}`);
-                    holdMinute += Math.floor((ed.getTime() - nowDate.getTime()) / (1000 * 60));
-                }
-            }
-        }
-        return res.status(200).send(holdMinute.toString());
-    }).catch((reason) => {
-        return res.status(406).send(reason.toString());
     });
 });
 //# sourceMappingURL=index.js.map

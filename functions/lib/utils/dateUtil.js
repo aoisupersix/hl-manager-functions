@@ -15,6 +15,18 @@ function getJstDate() {
 }
 exports.getJstDate = getJstDate;
 /**
+ * 引数に与えられたDateの時分秒を0で初期化します。
+ * @param date Date
+ */
+function initializeDate(date) {
+    date.setHours(0);
+    date.setMinutes(0);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+    return date;
+}
+exports.initializeDate = initializeDate;
+/**
  * 引数に与えられた数字列を2桁で埋めます。
  * @param original 桁埋めする数字
  */
@@ -68,4 +80,15 @@ function getLogsKeyString(date) {
     return `${format4Digit(date.getFullYear())}${format2Digit(date.getMonth() + 1)}${format2Digit(date.getDate())}`;
 }
 exports.getLogsKeyString = getLogsKeyString;
+/**
+ * 引数に与えられた２つのDateの日数差を取得して返します。
+ * @param date1 比較対象1
+ * @param date2 比較対象2
+ */
+function getDiff(date1, date2) {
+    const msDiff = date2.getTime() - date1.getTime();
+    let daysDiff = Math.floor(msDiff / (1000 * 60 * 60 * 24));
+    return ++daysDiff;
+}
+exports.getDiff = getDiff;
 //# sourceMappingURL=dateUtil.js.map
