@@ -77,7 +77,7 @@ export const updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geof
   //条件を満たしていればステータス更新
   if (nowStatus === Status.帰宅 && states.Any(_ => _)) {
     return updateStatus(parseInt(memberId), Status.学内);
-  } else if (nowStatus === Status.学内 && states.All(_ => !_)) {
+  } else if (states.All(_ => !_)) {
     return updateStatus(parseInt(memberId), Status.帰宅);
   }
 

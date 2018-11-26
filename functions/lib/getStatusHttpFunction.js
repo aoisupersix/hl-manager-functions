@@ -113,7 +113,9 @@ exports.getTimelineData = functions.https.onRequest((req, res) => __awaiter(this
             const stateTexts = []; // ステータステキスト
             const colors = []; // バーカラー
             logsSnap.child(dateKey).forEach(logSnap => {
-                const logDate = Moment(logSnap.child('date').val()).clone().subtract(9, 'hour');
+                // FIXME: なぜかどうやってもJSTになってしまう.
+                // とりあえず無理やり9時間引いて対応
+                const logDate = Moment(logSnap.child('date').val()).clone().subtract(9, 'hour'); // FIXME:
                 const logState = logSnap.child('update_status').val();
                 if (logState !== nowState) {
                     changeTimes.push(logDate.valueOf());

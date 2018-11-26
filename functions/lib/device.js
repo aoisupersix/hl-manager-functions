@@ -80,7 +80,7 @@ exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_
     if (nowStatus === states_1.Status.帰宅 && states.Any(_ => _)) {
         return updateStatus(parseInt(memberId), states_1.Status.学内);
     }
-    else if (nowStatus === states_1.Status.学内 && states.All(_ => !_)) {
+    else if (states.All(_ => !_)) {
         return updateStatus(parseInt(memberId), states_1.Status.帰宅);
     }
     return change.after;
