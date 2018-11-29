@@ -32,6 +32,15 @@ function updateStatus(memberId, status) {
     ]);
 }
 /**
+ * デバイスの最終更新日時を更新します。
+ * @param deviceId デバイスID
+ */
+function updateLastUpdate(deviceId) {
+    const nowDate = dUtil.getJstDate();
+    const update_date = dUtil.getDateString(nowDate);
+    return ref.child(`/devices/${deviceId}/last_update_date`).set(update_date);
+}
+/**
  * Realtime Database Trigger
  * 新たにデバイスが追加された際に各種データを初期化します。
  */
@@ -48,12 +57,9 @@ exports.initializeDevice = functions.database.ref('/devices/{deviceId}').onCreat
  * /deviceが更新された際にステータスと最終更新を更新します。
  */
 exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_status').onUpdate((change, context) => __awaiter(this, void 0, void 0, function* () {
-    //更新時間
-    const nowDate = dUtil.getJstDate();
-    const update_date = dUtil.getDateString(nowDate);
-    //最終更新の更新
-    yield ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date);
-    //メンバーIDとステータス取得
+    // 最終更新
+    const lastUpdate = updateLastUpdate(context.params.deviceId);
+    // メンバーIDとステータス取得
     const devSnap = yield ref.child(`/devices/${context.params.deviceId}`).once('value');
     if (!devSnap.hasChild('member_id')) {
         return change.after;
@@ -78,11 +84,35 @@ exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_
     console.log("geofence states: " + states.ToArray().join(','));
     //条件を満たしていればステータス更新
     if (nowStatus === states_1.Status.帰宅 && states.Any(_ => _)) {
-        return updateStatus(parseInt(memberId), states_1.Status.学内);
+        const statesPromise = updateStatus(parseInt(memberId), states_1.Status.学内);
+        return Promise.all([statesPromise, lastUpdate]);
     }
     else if (states.All(_ => !_)) {
-        return updateStatus(parseInt(memberId), states_1.Status.帰宅);
+        const statesPromise = updateStatus(parseInt(memberId), states_1.Status.帰宅);
+        return Promise.all([statesPromise, lastUpdate]);
     }
-    return change.after;
+    return lastUpdate;
+}));
+/**
+ * Realtime Database Trigger
+ * device/member_idが更新された際にmembers以下のデバイス情報を更新します。
+ */
+exports.updateMemberId = functions.database.ref('/devices/{deviceId}/member_id').onUpdate((change, context) => __awaiter(this, void 0, void 0, function* () {
+    //更新時間
+    const nowDate = dUtil.getJstDate();
+    const update_date = dUtil.getDateString(nowDate);
+    //最終更新の更新
+    const lastUpdate = ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date);
+    const beforeMemId = '' + change.before.exportVal();
+    const afterMemId = '' + change.after.exportVal();
+    const memSnap = yield ref.child('/members').once('value');
+    if (false === memSnap.hasChild(beforeMemId) && false === memSnap.hasChild(afterMemId)) {
+        // メンバーIDが存在しない（そんな場合はないと思うが一応ケア）
+        console.log('member_id not found: ' + beforeMemId + '->' + afterMemId);
+        return lastUpdate;
+    }
+    const deleteBeforeDev = ref.child(`/members/${beforeMemId}/devices/${context.params.deviceId}`).set(null);
+    const addAfterDev = ref.child(`/members/${afterMemId}/devices/${context.params.deviceId}`).set(true);
+    return Promise.all([lastUpdate, deleteBeforeDev, addAfterDev]);
 }));
 //# sourceMappingURL=device.js.map

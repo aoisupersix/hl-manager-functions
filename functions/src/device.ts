@@ -26,6 +26,17 @@ function updateStatus(memberId: number, status: number) {
 }
 
 /**
+ * デバイスの最終更新日時を更新します。
+ * @param deviceId デバイスID
+ */
+function updateLastUpdate(deviceId: string): Promise<void> {
+  const nowDate = dUtil.getJstDate();
+  const update_date = dUtil.getDateString(nowDate);
+  
+  return ref.child(`/devices/${deviceId}/last_update_date`).set(update_date);
+}
+
+/**
  * Realtime Database Trigger
  * 新たにデバイスが追加された際に各種データを初期化します。
  */
@@ -45,14 +56,10 @@ export const initializeDevice = functions.database.ref('/devices/{deviceId}').on
  * /deviceが更新された際にステータスと最終更新を更新します。
  */
 export const updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_status').onUpdate(async (change, context) => {
-  //更新時間
-  const nowDate = dUtil.getJstDate();
-  const update_date = dUtil.getDateString(nowDate);
+  // 最終更新
+  const lastUpdate = updateLastUpdate(context.params.deviceId);
 
-  //最終更新の更新
-  await ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date);
-
-  //メンバーIDとステータス取得
+  // メンバーIDとステータス取得
   const devSnap = await ref.child(`/devices/${context.params.deviceId}`).once('value');
   if (!devSnap.hasChild('member_id')) { return change.after; }
   const memberId = devSnap.child('member_id').val();
@@ -76,10 +83,38 @@ export const updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geof
 
   //条件を満たしていればステータス更新
   if (nowStatus === Status.帰宅 && states.Any(_ => _)) {
-    return updateStatus(parseInt(memberId), Status.学内);
+    const statesPromise = updateStatus(parseInt(memberId), Status.学内);
+    return Promise.all([statesPromise, lastUpdate]);
   } else if (states.All(_ => !_)) {
-    return updateStatus(parseInt(memberId), Status.帰宅);
+    const statesPromise = updateStatus(parseInt(memberId), Status.帰宅);
+    return Promise.all([statesPromise, lastUpdate]);
   }
 
-  return change.after;
+  return lastUpdate;
 });
+
+/**
+ * Realtime Database Trigger
+ * device/member_idが更新された際にmembers以下のデバイス情報を更新します。
+ */
+export const updateMemberId = functions.database.ref('/devices/{deviceId}/member_id').onUpdate(async (change, context) => {
+  //更新時間
+  const nowDate = dUtil.getJstDate();
+  const update_date = dUtil.getDateString(nowDate);
+
+  //最終更新の更新
+  const lastUpdate = ref.child(`/devices/${context.params.deviceId}/last_update_date`).set(update_date);
+
+  const beforeMemId = '' + change.before.exportVal();
+  const afterMemId = '' + change.after.exportVal();
+  const memSnap = await ref.child('/members').once('value');
+  if (false === memSnap.hasChild(beforeMemId) && false === memSnap.hasChild(afterMemId) ) {
+    // メンバーIDが存在しない（そんな場合はないと思うが一応ケア）
+    console.log('member_id not found: ' + beforeMemId + '->' + afterMemId);
+    return lastUpdate;
+  }
+  
+  const deleteBeforeDev = ref.child(`/members/${beforeMemId}/devices/${context.params.deviceId}`).set(null);
+  const addAfterDev = ref.child(`/members/${afterMemId}/devices/${context.params.deviceId}`).set(true);
+  return Promise.all([lastUpdate, deleteBeforeDev, addAfterDev]);
+})

@@ -3,7 +3,7 @@ import * as secureCompare from 'secure-compare';
 import * as Moment from 'moment-timezone'
 
 import { adminSdk } from './firebaseConfig'
-import { initializeDevice, updateDeviceInfo } from './device'
+import { initializeDevice, updateDeviceInfo, updateMemberId } from './device'
 import { updateMemberStatus } from './member'
 import { holdTime, getTimelineData } from './getStatusHttpFunction'
 import { updateGeofenceStatus } from './geofenceHttpFunction'
@@ -17,6 +17,7 @@ Moment.tz.setDefault("Asia/Tokyo")
 
 export {
     initializeDevice,
+    updateMemberId,
     updateMemberStatus,
     updateDeviceInfo,
     holdTime,

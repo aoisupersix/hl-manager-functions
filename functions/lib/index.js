@@ -7,6 +7,7 @@ const firebaseConfig_1 = require("./firebaseConfig");
 const device_1 = require("./device");
 exports.initializeDevice = device_1.initializeDevice;
 exports.updateDeviceInfo = device_1.updateDeviceInfo;
+exports.updateMemberId = device_1.updateMemberId;
 const member_1 = require("./member");
 exports.updateMemberStatus = member_1.updateMemberStatus;
 const getStatusHttpFunction_1 = require("./getStatusHttpFunction");
