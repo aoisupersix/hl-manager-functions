@@ -57,8 +57,10 @@ exports.initializeDevice = functions.database.ref('/devices/{deviceId}').onCreat
  * /deviceが更新された際にステータスと最終更新を更新します。
  */
 exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_status').onUpdate((change, context) => __awaiter(this, void 0, void 0, function* () {
+    const retPromise = [];
     // 最終更新
     const lastUpdate = updateLastUpdate(context.params.deviceId);
+    retPromise.push(lastUpdate);
     // メンバーIDとステータス取得
     const devSnap = yield ref.child(`/devices/${context.params.deviceId}`).once('value');
     if (!devSnap.hasChild('member_id')) {
@@ -78,20 +80,26 @@ exports.updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_
         return change.after;
     }
     const nowStatus = memSnap.val();
-    //ジオフェンス状態取得
+    // ジオフェンス状態取得
     const geofenceStates = new linqts_1.List(geofenceConst.Identifiers);
     const states = geofenceStates.Select(g => change.after.child(`${g}`).val());
     console.log("geofence states: " + states.ToArray().join(','));
-    //条件を満たしていればステータス更新
+    // 現在のジオフェンス状態メッセージ
+    const gStates = geofenceStates // 侵入しているジオフェンス
+        .Where(g => change.after.child(`${g}`).val())
+        .Select(g => geofenceConst.IdentifierDescriptions[g]);
+    const geofenceMessage = ref.child(`/members/${memberId}/geofence_message`).set(gStates.ToArray().join('、もしくは') + 'にいます。');
+    retPromise.push(geofenceMessage);
+    // 条件を満たしていればステータス更新
     if (nowStatus === states_1.Status.帰宅 && states.Any(_ => _)) {
         const statesPromise = updateStatus(parseInt(memberId), states_1.Status.学内);
-        return Promise.all([statesPromise, lastUpdate]);
+        retPromise.push(statesPromise);
     }
     else if (states.All(_ => !_)) {
         const statesPromise = updateStatus(parseInt(memberId), states_1.Status.帰宅);
-        return Promise.all([statesPromise, lastUpdate]);
+        retPromise.push(statesPromise);
     }
-    return lastUpdate;
+    return Promise.all(retPromise);
 }));
 /**
  * Realtime Database Trigger

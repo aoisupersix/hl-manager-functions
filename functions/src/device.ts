@@ -56,8 +56,10 @@ export const initializeDevice = functions.database.ref('/devices/{deviceId}').on
  * /deviceが更新された際にステータスと最終更新を更新します。
  */
 export const updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geofence_status').onUpdate(async (change, context) => {
+  const retPromise = [];
   // 最終更新
   const lastUpdate = updateLastUpdate(context.params.deviceId);
+  retPromise.push(lastUpdate);
 
   // メンバーIDとステータス取得
   const devSnap = await ref.child(`/devices/${context.params.deviceId}`).once('value');
@@ -76,21 +78,30 @@ export const updateDeviceInfo = functions.database.ref('/devices/{deviceId}/geof
   }
   const nowStatus = memSnap.val();
 
-  //ジオフェンス状態取得
+  // ジオフェンス状態取得
   const geofenceStates = new List<string>(geofenceConst.Identifiers);
   const states = geofenceStates.Select(g => change.after.child(`${g}`).val());
   console.log("geofence states: " + states.ToArray().join(','))
 
-  //条件を満たしていればステータス更新
+  // 現在のジオフェンス状態メッセージ
+  const gStates = geofenceStates // 侵入しているジオフェンス
+    .Where(g => change.after.child(`${g}`).val())
+    .Select(g => geofenceConst.IdentifierDescriptions[g]);
+  const geofenceMessage = ref.child(`/members/${memberId}/geofence_message`).set(
+    gStates.ToArray().join('、もしくは') + 'にいます。'
+  );
+  retPromise.push(geofenceMessage);
+
+  // 条件を満たしていればステータス更新
   if (nowStatus === Status.帰宅 && states.Any(_ => _)) {
     const statesPromise = updateStatus(parseInt(memberId), Status.学内);
-    return Promise.all([statesPromise, lastUpdate]);
+    retPromise.push(statesPromise);
   } else if (states.All(_ => !_)) {
     const statesPromise = updateStatus(parseInt(memberId), Status.帰宅);
-    return Promise.all([statesPromise, lastUpdate]);
+    retPromise.push(statesPromise);
   }
 
-  return lastUpdate;
+  return Promise.all(retPromise);
 });
 
 /**
